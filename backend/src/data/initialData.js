@@ -67,7 +67,8 @@ export const INITIAL_SUBJECTS = [
     syllabusPageRef: 'Page 10',
     overview: 'Fundamental study of design elements, principles, textile fibres, polymer properties, and basic textile classification.',
     courseObjectives: ['Understand basic design principles', 'Classify textile fibres by origin and chemistry', 'Analyze yarn and polymer structures'],
-    booksPrescribed: ['Textile Science by E.P. Gohl & L.D. Vilensky', 'Understanding Textiles by Phyllis G. Tortora']
+    booksPrescribed: ['Textile Science by E.P. Gohl & L.D. Vilensky', 'Understanding Textiles by Phyllis G. Tortora'],
+    instructionsForPaperSetters: 'The examiner will set three questions from Section-I, each question carrying 12 marks. Section A carries 09 marks (compulsory short questions).'
   },
   {
     code: 'BVTD112',
@@ -119,7 +120,8 @@ export const INITIAL_SUBJECTS = [
       'Sewing Techniques and Patterns by Marie-Naelle Bayard',
       'Complete Guide to Sewing by Reader\'s Digest',
       'The ultimate sewing book by Maggi McCormick'
-    ]
+    ],
+    instructionsForPaperSetters: 'The examiner will set three questions from Section-I, each question carrying 12 marks.'
   },
   {
     code: 'BVTD114',
@@ -141,10 +143,11 @@ export const INITIAL_SUBJECTS = [
     overview: 'Comprehensive study of entrepreneurship concepts, functions, development processes, support systems, and enterprise barriers.',
     courseObjectives: ['To impart the knowledge of Entrepreneurship - which will help the students to start their enterprise.'],
     booksPrescribed: [
-      'Entrepreneurial Development by Dr. S. Moharana and Dr. Dash',
-      'Entrepreneurial Development by S.S. Khanna',
-      'Entrepreneurial Development by C.B. Gupta and N.P. Srinivasan'
-    ]
+      'Entrepreneurial Development by Dr. S. Moharana and Dr. Dash (RBSA Publishers, Jaipur)',
+      'Entrepreneurial Development by S.S. Khanna (S. Chand & Company Ltd.)',
+      'Entrepreneurial Development by C.B. Gupta and N.P. Srinivasan (Sultan Chand & Co.)'
+    ],
+    instructionsForPaperSetters: 'There will be five sections. Section A carries 09 marks (compulsory short questions). Sections B, C, D and E will be set from Unit I, II, III, & IV respectively consisting of two questions of 7 marks each.'
   },
   {
     code: 'CS-BVTD111',
@@ -383,6 +386,48 @@ export const INITIAL_SUBJECTS = [
 ];
 
 export const INITIAL_TOPICS = [
+  // BVTD111 - Design Foundation & Basics of Textile
+  {
+    topicId: 'bvtd111_u1_t1',
+    subjectCode: 'BVTD111',
+    unitNumber: 1,
+    unitTitle: 'Unit-I: Elements of Design & Fibre Classification',
+    title: 'Fibre Classification & Polymer Structure',
+    overview: 'Comprehensive analysis of natural (cotton, flax, silk, wool) and synthetic (nylon, polyester, acrylic) fibres.',
+    keyPoints: [
+      'Fibres are classified into Natural (Plant, Animal, Mineral) and Manufactured (Regenerated, Synthetic).',
+      'Cotton is composed of 88-96% cellulose, displaying natural convolutions under microscope.',
+      'Wool is a protein fibre with outer cuticular scales providing felting ability and thermal warmth.',
+      'Polyester (PET) is synthesized via terephthalic acid & ethylene glycol, exhibiting high crease resistance.'
+    ],
+    importantTerms: {
+      'Monomer': 'Small molecular repeat unit linked to form long polymer chains.',
+      'Convolutions': 'Natural ribbon-like twists along the longitudinal axis of mature cotton fibres.',
+      'Tenacity': 'Tensile strength of a fibre expressed in grams per denier (g/d) or cN/tex.',
+      'Moisture Regain': 'Percentage of moisture absorbed by a bone-dry fibre under standard conditions (65% RH, 20°C).'
+    },
+    visualExplanation: 'Cross-sectional and longitudinal microscopic diagrams showing cotton kidney bean shape, wool round scaly shape, and polyester smooth cylindrical rod.',
+    industrialRelevance: 'Essential for raw material procurement, blend ratio calculation, and yarn spinning parameter adjustments.',
+    quickRevisionSummary: 'Natural vs Synthetic classification, cellulose vs protein chemistry, moisture regain (Cotton: 8.5%, Wool: 15-17%, Polyester: 0.4%).'
+  },
+
+  // BVTD112 - Design Foundation (Practical)
+  {
+    topicId: 'bvtd112_sec1_t1',
+    subjectCode: 'BVTD112',
+    unitNumber: 1,
+    unitTitle: 'Section-I: Microscopic & Chemical Fibre Testing',
+    title: 'Microscopic & Burning Test Fibre Identification',
+    overview: 'Laboratory practicals on microscopic identification, burning test, chemical solubility, and lockstitch sewing machine operations.',
+    keyPoints: [
+      'Microscopic examination reveals longitudinal convolutions in cotton and scales in wool.',
+      'Burning test differentiates protein (burning hair odor) from cellulose (burning paper odor) and synthetics (hard bead).'
+    ],
+    importantTerms: {
+      'Solubility Test': 'Using 70% Sulfuric Acid or Acetone to dissolve specific fibre types chemically.'
+    }
+  },
+
   // BVTD113 - Sewing Techniques (Practical)
   {
     topicId: 'bvtd113_sec1_t1',
@@ -556,6 +601,40 @@ export const INITIAL_TOPICS = [
     }
   },
 
+  // CS-BVTD111 - Computer Application-I
+  {
+    topicId: 'cs_bvtd111_u1_t1',
+    subjectCode: 'CS-BVTD111',
+    unitNumber: 1,
+    unitTitle: 'Unit-I: Computer Systems & OS Environment',
+    title: 'PC Anatomy & Operating Systems',
+    overview: 'Introduction to hardware components, operating system fundamentals, file management, and digital peripherals for textile studios.',
+    keyPoints: [
+      'Hardware vs Software architecture.',
+      'File system hierarchy, directory navigation, and backup safety.'
+    ],
+    importantTerms: {
+      'OS': 'Operating System managing software resources and hardware peripherals.'
+    }
+  },
+
+  // BCSV-1129 - Communication Skills in English-I
+  {
+    topicId: 'bcsv_1129_u1_t1',
+    subjectCode: 'BCSV-1129',
+    unitNumber: 1,
+    unitTitle: 'Unit-I: Business Communication & Vocabulary',
+    title: 'Professional Vocabulary & Reading Comprehension',
+    overview: 'Building professional English vocabulary, reading strategies, and business correspondence fundamentals.',
+    keyPoints: [
+      'Active vs Passive voice in formal correspondence.',
+      'Structuring clear business letters and professional emails.'
+    ],
+    importantTerms: {
+      'Salutation': 'Formal greeting line in business letter correspondence.'
+    }
+  },
+
   // BVTD121 - Introduction to Fashion
   {
     topicId: 'bvtd121_u1_t1',
@@ -571,6 +650,59 @@ export const INITIAL_TOPICS = [
     importantTerms: {
       'Fad': 'Short-lived craze characterized by rapid spike and sudden disappearance.',
       'Classic': 'Style maintaining long-term acceptance across decades with minor updates.'
+    }
+  },
+
+  // BVTD122 - Garment Sewing (Practical)
+  {
+    topicId: 'bvtd122_sec1_t1',
+    subjectCode: 'BVTD122',
+    unitNumber: 1,
+    unitTitle: 'Section-I: Adult Bodice Block & Pattern Construction',
+    title: '8-Head Croquis & Bodice Block Creation',
+    overview: 'Pattern drafting, 8-head croquis figure sketching, bodice block creation, and dart manipulation.',
+    keyPoints: [
+      'Bust apex pivoting for front bodice darts.',
+      'Drafting basic skirt foundation block and shoulder dart transfers.'
+    ],
+    importantTerms: {
+      'Apex': 'Highest mound point around which bust darts rotate.'
+    }
+  },
+
+  // BVTD123 - Design Foundation & Basics of Textiles II (Practical)
+  {
+    topicId: 'bvtd123_sec1_t1',
+    subjectCode: 'BVTD123',
+    unitNumber: 1,
+    unitTitle: 'Section-I: Woven Fabric Structures & Graph Analysis',
+    title: 'Basic Weave Interlacement: Plain, Twill, Satin',
+    overview: 'Graph representation of 1/1 Plain, 2/2 Twill, and 5-end Satin weaves on point paper.',
+    keyPoints: [
+      'Plain Weave (1/1): Maximum interlacements, durable, reversible.',
+      'Twill Weave (2/2): Prominent diagonal wales at 45° angle.',
+      'Point Paper Convention: Marked/filled square = Warp float (Warp over Weft).'
+    ],
+    importantTerms: {
+      'Warp Float': 'Warp yarn passing over one or more weft picks on fabric surface.',
+      'Heald Shaft': 'Frame holding heald wires that separate warp threads into shedding layers.'
+    }
+  },
+
+  // BVTD124 - Enterprise Planning
+  {
+    topicId: 'bvtd124_u1_t1',
+    subjectCode: 'BVTD124',
+    unitNumber: 1,
+    unitTitle: 'Unit-I: Business Planning & DPR Appraisal',
+    title: 'Detailed Project Report (DPR) Formulation',
+    overview: 'Comprehensive process of formulating a DPR for garment manufacturing units, financial appraisal, and MSME capital subsidies.',
+    keyPoints: [
+      'Project identification, capacity planning, machinery selection.',
+      'Break-even point (BEP) analysis and payback period calculation.'
+    ],
+    importantTerms: {
+      'BEP': 'Break-even Point where total revenue equals total fixed and variable costs.'
     }
   }
 ];
@@ -612,6 +744,24 @@ export const INITIAL_PRACTICALS = [
     vivaQuestions: [
       { question: 'Why should you not backstitch at a dart apex?', answer: 'Backstitching at the apex creates an unsightly sharp bump or pucker on the outer garment.' }
     ]
+  },
+  {
+    practicalId: 'bvtd112_p1_microscope',
+    subjectCode: 'BVTD112',
+    title: 'Microscopic & Burning Test Fibre Identification',
+    objective: 'To identify unknown fibre samples using longitudinal microscopic view and flame behavior.',
+    materialsRequired: ['Glass slides', 'Compound microscope', 'Spirit lamp', 'Tweezers', 'Cotton, Wool, Silk, Polyester samples'],
+    theory: 'Morphology and chemical combustion behavior uniquely identify textile fibres.',
+    stepByStepProcedure: [
+      'Place fibre on glass slide with water drop, cover with coverslip.',
+      'Observe under 100x magnification for convolutions (cotton) or scales (wool).',
+      'Perform flame burning test over safety tray.'
+    ],
+    expectedObservations: 'Cotton shows flat twisted ribbon convolutions; wool shows surface scale overlap.',
+    precautions: ['Perform burning test in ventilated area'],
+    vivaQuestions: [
+      { question: 'How do you identify wool under a microscope?', answer: 'Presence of overlapping surface cuticular scales.' }
+    ]
   }
 ];
 
@@ -649,6 +799,17 @@ export const INITIAL_QUIZZES = [
     correctIndex: 0,
     explanation: 'District Industries Centre (DIC) provides single-window clearance, registration, and advisory services for MSMEs.',
     difficulty: 'MEDIUM'
+  },
+  {
+    questionId: 'bvtd111_q1',
+    subjectCode: 'BVTD111',
+    unitNumber: 1,
+    topicId: 'bvtd111_u1_t1',
+    question: 'What is the natural percentage of cellulose found in mature cotton fibres?',
+    options: ['50-60%', '70-75%', '88-96%', '100%'],
+    correctIndex: 2,
+    explanation: 'Cotton is a natural cellulosic seed-hair fibre containing approximately 88-96% pure cellulose.',
+    difficulty: 'EASY'
   }
 ];
 
@@ -713,6 +874,15 @@ export const INITIAL_RESOURCES = [
     category: 'Textbook',
     description: 'Prescribed reference book for MSME enterprise planning, institutional support, and DPR formulation.',
     downloadSize: '12.3 MB',
+    format: 'PDF Study Manual'
+  },
+  {
+    resourceId: 'res_bvtd111_textile',
+    title: 'Textile Science — Principles & Polymers (E.P. Gohl)',
+    subjectCode: 'BVTD111',
+    category: 'Textbook',
+    description: 'Prescribed reference book for fibre chemistry, physical structure, and polymer properties.',
+    downloadSize: '14.2 MB',
     format: 'PDF Study Manual'
   }
 ];
