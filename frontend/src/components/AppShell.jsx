@@ -5,13 +5,14 @@ import { useAuth } from '../context/AuthContext';
 const NAV = [
   { to: '/', label: 'Home', glyph: '01' },
   { to: '/syllabus', label: 'Syllabus', glyph: '02' },
-  { to: '/quiz-hub', label: 'Quiz Hub', glyph: '03' },
-  { to: '/flashcards', label: 'Flashcards', glyph: '04' },
-  { to: '/practical-lab', label: 'Practical Lab', glyph: '05' },
-  { to: '/ai-tutor', label: 'AI Tutor', glyph: '06' },
-  { to: '/career', label: 'Career & Industry', glyph: '07' },
-  { to: '/resources', label: 'Resources', glyph: '08' },
-  { to: '/progress', label: 'Bookmarks & Progress', glyph: '09' }
+  { to: '/practice-studio', label: 'Practice Studio', glyph: '03' },
+  { to: '/quiz-hub', label: 'Quiz Hub', glyph: '04' },
+  { to: '/flashcards', label: 'Flashcards', glyph: '05' },
+  { to: '/practical-lab', label: 'Practical Lab', glyph: '06' },
+  { to: '/ai-tutor', label: 'AI Tutor', glyph: '07' },
+  { to: '/career', label: 'Career & Industry', glyph: '08' },
+  { to: '/resources', label: 'Resources', glyph: '09' },
+  { to: '/progress', label: 'Bookmarks & Progress', glyph: '10' }
 ];
 
 export default function AppShell({ children }) {

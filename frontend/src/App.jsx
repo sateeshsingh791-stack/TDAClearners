@@ -8,6 +8,7 @@ import SubjectDetail from './pages/SubjectDetail';
 import TopicLearning from './pages/TopicLearning';
 import QuizHub from './pages/QuizHub';
 import Flashcards from './pages/Flashcards';
+import PracticeStudio from './pages/PracticeStudio';
 import PracticalLab from './pages/PracticalLab';
 import AiTutor from './pages/AiTutor';
 import CareerIndustry from './pages/CareerIndustry';
@@ -26,6 +27,7 @@ export default function App() {
       <Route path="/subjects/:code" element={<AppShell><SubjectDetail /></AppShell>} />
       <Route path="/topics/:topicId" element={<AppShell><TopicLearning /></AppShell>} />
       <Route path="/quiz-hub" element={<AppShell><QuizHub /></AppShell>} />
+      <Route path="/practice-studio" element={<AppShell><PracticeStudio /></AppShell>} />
       <Route path="/flashcards" element={<AppShell><Flashcards /></AppShell>} />
       <Route path="/practical-lab" element={<AppShell><PracticalLab /></AppShell>} />
       <Route
