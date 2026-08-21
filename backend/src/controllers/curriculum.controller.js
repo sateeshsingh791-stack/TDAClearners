@@ -3,14 +3,30 @@ import { Topic } from '../models/Topic.js';
 import { Practical } from '../models/Practical.js';
 import { CareerRole } from '../models/CareerRole.js';
 import { Resource } from '../models/Resource.js';
+import {
+  INITIAL_SUBJECTS,
+  INITIAL_TOPICS,
+  INITIAL_PRACTICALS,
+  INITIAL_CAREERS,
+  INITIAL_RESOURCES
+} from '../data/initialData.js';
 
 /**
  * Get all subjects categorized by semester/year.
  */
 export const getSemesters = async (req, res, next) => {
   try {
-    const subjects = await Subject.find().sort({ semesterNumber: 1, code: 1 });
-    
+    let subjects = [];
+    try {
+      subjects = await Subject.find().sort({ semesterNumber: 1, code: 1 });
+    } catch (e) {
+      subjects = [];
+    }
+
+    if (!subjects || subjects.length === 0) {
+      subjects = INITIAL_SUBJECTS;
+    }
+
     // Group subjects into semesters (1 to 6)
     const semesterNumbers = [1, 2, 3, 4, 5, 6];
     const semesters = semesterNumbers.map((num) => {
@@ -46,17 +62,32 @@ export const getSemesters = async (req, res, next) => {
 export const getSubjectByCode = async (req, res, next) => {
   try {
     const code = req.params.code.toUpperCase();
-    const subject = await Subject.findOne({ code });
+    let subject = null;
+    let topics = [];
+    let practicals = [];
 
-    if (!subject) {
-      return res.status(404).json({
-        success: false,
-        error: { message: `Subject ${code} not found.` }
-      });
+    try {
+      subject = await Subject.findOne({ code });
+      if (subject) {
+        topics = await Topic.find({ subjectCode: code }).sort({ unitNumber: 1, topicId: 1 });
+        practicals = await Practical.find({ subjectCode: code });
+        subject = subject.toObject();
+      }
+    } catch (e) {
+      subject = null;
     }
 
-    const topics = await Topic.find({ subjectCode: code }).sort({ unitNumber: 1, topicId: 1 });
-    const practicals = await Practical.find({ subjectCode: code });
+    if (!subject) {
+      subject = INITIAL_SUBJECTS.find((s) => s.code.toUpperCase() === code);
+      if (!subject) {
+        return res.status(404).json({
+          success: false,
+          error: { message: `Subject ${code} not found.` }
+        });
+      }
+      topics = INITIAL_TOPICS.filter((t) => t.subjectCode.toUpperCase() === code);
+      practicals = INITIAL_PRACTICALS.filter((p) => p.subjectCode.toUpperCase() === code);
+    }
 
     // Group topics by unit number
     const unitMap = new Map();
@@ -76,7 +107,7 @@ export const getSubjectByCode = async (req, res, next) => {
     const units = Array.from(unitMap.values()).sort((a, b) => a.unitNumber - b.unitNumber);
 
     const fullSubject = {
-      ...subject.toObject(),
+      ...subject,
       units,
       practicals
     };
@@ -95,7 +126,16 @@ export const getSubjectByCode = async (req, res, next) => {
  */
 export const getTopicById = async (req, res, next) => {
   try {
-    const topic = await Topic.findOne({ topicId: req.params.topicId });
+    let topic = null;
+    try {
+      topic = await Topic.findOne({ topicId: req.params.topicId });
+    } catch (e) {
+      topic = null;
+    }
+
+    if (!topic) {
+      topic = INITIAL_TOPICS.find((t) => t.topicId === req.params.topicId);
+    }
 
     if (!topic) {
       return res.status(404).json({
@@ -119,8 +159,19 @@ export const getTopicById = async (req, res, next) => {
 export const getPracticals = async (req, res, next) => {
   try {
     const { subjectCode } = req.query;
-    const filter = subjectCode ? { subjectCode: subjectCode.toUpperCase() } : {};
-    const practicals = await Practical.find(filter);
+    let practicals = [];
+    try {
+      const filter = subjectCode ? { subjectCode: subjectCode.toUpperCase() } : {};
+      practicals = await Practical.find(filter);
+    } catch (e) {
+      practicals = [];
+    }
+
+    if (!practicals || practicals.length === 0) {
+      practicals = subjectCode
+        ? INITIAL_PRACTICALS.filter((p) => p.subjectCode.toUpperCase() === subjectCode.toUpperCase())
+        : INITIAL_PRACTICALS;
+    }
 
     res.status(200).json({
       success: true,
@@ -136,7 +187,17 @@ export const getPracticals = async (req, res, next) => {
  */
 export const getCareers = async (req, res, next) => {
   try {
-    const careers = await CareerRole.find();
+    let careers = [];
+    try {
+      careers = await CareerRole.find();
+    } catch (e) {
+      careers = [];
+    }
+
+    if (!careers || careers.length === 0) {
+      careers = INITIAL_CAREERS;
+    }
+
     res.status(200).json({
       success: true,
       data: { careers }
@@ -151,7 +212,17 @@ export const getCareers = async (req, res, next) => {
  */
 export const getResources = async (req, res, next) => {
   try {
-    const resources = await Resource.find();
+    let resources = [];
+    try {
+      resources = await Resource.find();
+    } catch (e) {
+      resources = [];
+    }
+
+    if (!resources || resources.length === 0) {
+      resources = INITIAL_RESOURCES;
+    }
+
     res.status(200).json({
       success: true,
       data: { resources }

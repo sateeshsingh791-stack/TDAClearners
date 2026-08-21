@@ -1,5 +1,6 @@
 import { QuizQuestion } from '../models/QuizQuestion.js';
 import { Flashcard } from '../models/Flashcard.js';
+import { INITIAL_QUIZZES, INITIAL_FLASHCARDS } from '../data/initialData.js';
 
 /**
  * Get scoped quiz questions with scope-aware filtering
@@ -25,12 +26,26 @@ export const getScopedQuizzes = async (req, res, next) => {
       filter.difficulty = difficulty.toUpperCase();
     }
 
-    let questions = await QuizQuestion.find(filter);
+    let questions = [];
+    try {
+      questions = await QuizQuestion.find(filter);
+    } catch (e) {
+      questions = [];
+    }
 
-    // Limit count (default 10, Quick mode 5)
+    if (!questions || questions.length === 0) {
+      const cleanSubj = subjectCode ? subjectCode.replace(/\s+/g, '').toUpperCase() : null;
+      questions = INITIAL_QUIZZES.filter((q) => {
+        if (cleanSubj && q.subjectCode.replace(/\s+/g, '').toUpperCase() !== cleanSubj) return false;
+        if (unitNumber && parseInt(unitNumber, 10) > 0 && q.unitNumber !== parseInt(unitNumber, 10)) return false;
+        if (topicId && q.topicId !== topicId) return false;
+        if (quizMode === 'VIVA' && !q.isPracticalViva) return false;
+        if (difficulty && difficulty !== 'MIXED' && q.difficulty.toUpperCase() !== difficulty.toUpperCase()) return false;
+        return true;
+      });
+    }
+
     const targetCount = quizMode === 'QUICK' ? 5 : (parseInt(count, 10) || 10);
-    
-    // Shuffle and pick target count
     questions = questions.sort(() => 0.5 - Math.random()).slice(0, targetCount);
 
     res.status(200).json({
@@ -63,7 +78,23 @@ export const getScopedFlashcards = async (req, res, next) => {
       filter.type = type.toUpperCase();
     }
 
-    const flashcards = await Flashcard.find(filter);
+    let flashcards = [];
+    try {
+      flashcards = await Flashcard.find(filter);
+    } catch (e) {
+      flashcards = [];
+    }
+
+    if (!flashcards || flashcards.length === 0) {
+      const cleanSubj = subjectCode ? subjectCode.replace(/\s+/g, '').toUpperCase() : null;
+      flashcards = INITIAL_FLASHCARDS.filter((f) => {
+        if (cleanSubj && f.subjectCode.replace(/\s+/g, '').toUpperCase() !== cleanSubj) return false;
+        if (unitNumber && parseInt(unitNumber, 10) > 0 && f.unitNumber !== parseInt(unitNumber, 10)) return false;
+        if (topicId && f.topicId !== topicId) return false;
+        if (type && f.type.toUpperCase() !== type.toUpperCase()) return false;
+        return true;
+      });
+    }
 
     res.status(200).json({
       success: true,
