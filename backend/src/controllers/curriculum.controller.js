@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Subject } from '../models/Subject.js';
 import { Topic } from '../models/Topic.js';
 import { Practical } from '../models/Practical.js';
@@ -11,23 +12,26 @@ import {
   INITIAL_RESOURCES
 } from '../data/initialData.js';
 
+const isDbConnected = () => mongoose.connection.readyState === 1;
+
 /**
  * Get all subjects categorized by semester/year.
  */
 export const getSemesters = async (req, res, next) => {
   try {
     let subjects = [];
-    try {
-      subjects = await Subject.find().sort({ semesterNumber: 1, code: 1 });
-    } catch (e) {
-      subjects = [];
+    if (isDbConnected()) {
+      try {
+        subjects = await Subject.find().sort({ semesterNumber: 1, code: 1 });
+      } catch (e) {
+        subjects = [];
+      }
     }
 
     if (!subjects || subjects.length === 0) {
       subjects = INITIAL_SUBJECTS;
     }
 
-    // Group subjects into semesters (1 to 6)
     const semesterNumbers = [1, 2, 3, 4, 5, 6];
     const semesters = semesterNumbers.map((num) => {
       const semSubjects = subjects.filter((s) => s.semesterNumber === num);
@@ -66,15 +70,17 @@ export const getSubjectByCode = async (req, res, next) => {
     let topics = [];
     let practicals = [];
 
-    try {
-      subject = await Subject.findOne({ code });
-      if (subject) {
-        topics = await Topic.find({ subjectCode: code }).sort({ unitNumber: 1, topicId: 1 });
-        practicals = await Practical.find({ subjectCode: code });
-        subject = subject.toObject();
+    if (isDbConnected()) {
+      try {
+        subject = await Subject.findOne({ code });
+        if (subject) {
+          topics = await Topic.find({ subjectCode: code }).sort({ unitNumber: 1, topicId: 1 });
+          practicals = await Practical.find({ subjectCode: code });
+          subject = subject.toObject();
+        }
+      } catch (e) {
+        subject = null;
       }
-    } catch (e) {
-      subject = null;
     }
 
     if (!subject) {
@@ -89,7 +95,6 @@ export const getSubjectByCode = async (req, res, next) => {
       practicals = INITIAL_PRACTICALS.filter((p) => p.subjectCode.toUpperCase() === code);
     }
 
-    // Group topics by unit number
     const unitMap = new Map();
     topics.forEach((t) => {
       if (!unitMap.has(t.unitNumber)) {
@@ -127,10 +132,12 @@ export const getSubjectByCode = async (req, res, next) => {
 export const getTopicById = async (req, res, next) => {
   try {
     let topic = null;
-    try {
-      topic = await Topic.findOne({ topicId: req.params.topicId });
-    } catch (e) {
-      topic = null;
+    if (isDbConnected()) {
+      try {
+        topic = await Topic.findOne({ topicId: req.params.topicId });
+      } catch (e) {
+        topic = null;
+      }
     }
 
     if (!topic) {
@@ -160,11 +167,13 @@ export const getPracticals = async (req, res, next) => {
   try {
     const { subjectCode } = req.query;
     let practicals = [];
-    try {
-      const filter = subjectCode ? { subjectCode: subjectCode.toUpperCase() } : {};
-      practicals = await Practical.find(filter);
-    } catch (e) {
-      practicals = [];
+    if (isDbConnected()) {
+      try {
+        const filter = subjectCode ? { subjectCode: subjectCode.toUpperCase() } : {};
+        practicals = await Practical.find(filter);
+      } catch (e) {
+        practicals = [];
+      }
     }
 
     if (!practicals || practicals.length === 0) {
@@ -188,10 +197,12 @@ export const getPracticals = async (req, res, next) => {
 export const getCareers = async (req, res, next) => {
   try {
     let careers = [];
-    try {
-      careers = await CareerRole.find();
-    } catch (e) {
-      careers = [];
+    if (isDbConnected()) {
+      try {
+        careers = await CareerRole.find();
+      } catch (e) {
+        careers = [];
+      }
     }
 
     if (!careers || careers.length === 0) {
@@ -213,10 +224,12 @@ export const getCareers = async (req, res, next) => {
 export const getResources = async (req, res, next) => {
   try {
     let resources = [];
-    try {
-      resources = await Resource.find();
-    } catch (e) {
-      resources = [];
+    if (isDbConnected()) {
+      try {
+        resources = await Resource.find();
+      } catch (e) {
+        resources = [];
+      }
     }
 
     if (!resources || resources.length === 0) {

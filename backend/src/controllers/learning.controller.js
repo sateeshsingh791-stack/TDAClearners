@@ -1,6 +1,9 @@
+import mongoose from 'mongoose';
 import { QuizQuestion } from '../models/QuizQuestion.js';
 import { Flashcard } from '../models/Flashcard.js';
 import { INITIAL_QUIZZES, INITIAL_FLASHCARDS } from '../data/initialData.js';
+
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 /**
  * Get scoped quiz questions with scope-aware filtering
@@ -27,10 +30,12 @@ export const getScopedQuizzes = async (req, res, next) => {
     }
 
     let questions = [];
-    try {
-      questions = await QuizQuestion.find(filter);
-    } catch (e) {
-      questions = [];
+    if (isDbConnected()) {
+      try {
+        questions = await QuizQuestion.find(filter);
+      } catch (e) {
+        questions = [];
+      }
     }
 
     if (!questions || questions.length === 0) {
@@ -79,10 +84,12 @@ export const getScopedFlashcards = async (req, res, next) => {
     }
 
     let flashcards = [];
-    try {
-      flashcards = await Flashcard.find(filter);
-    } catch (e) {
-      flashcards = [];
+    if (isDbConnected()) {
+      try {
+        flashcards = await Flashcard.find(filter);
+      } catch (e) {
+        flashcards = [];
+      }
     }
 
     if (!flashcards || flashcards.length === 0) {
