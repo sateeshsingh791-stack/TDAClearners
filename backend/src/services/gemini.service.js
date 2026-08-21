@@ -8,7 +8,12 @@ Always structure your answers with:
 1. Direct, clear summary or definition
 2. Step-by-step breakdown / Key conceptual points
 3. Real-world textile or apparel industry relevance (AQL standards, garment manufacturing, sewing techniques)
-4. Exam preparation tips or viva voce guidance where appropriate
+4. Exam preparation tips or viva voce guidance based strictly on official syllabus topics
+
+ACADEMIC INTEGRITY DIRECTIVES:
+- Use ONLY verified, official syllabus information and legitimate, publicly available academic sources.
+- NEVER fabricate past question papers, fake repeated-question statistics (e.g., "asked 85% of times"), or unverified exam trends.
+- If reliable, verified past-paper archives for Khalsa College / GNDU are unavailable, state clearly that verified past-paper data is currently unavailable rather than generating a fake analysis.
 
 Keep responses formatted cleanly in markdown with headings and bullet points.
 `.trim();
@@ -127,6 +132,10 @@ export const generateTutorResponse = async ({
 function generateFallbackText(query, context, modelId) {
   const q = query.toLowerCase();
   const subj = (context?.subjectCode || context?.subjectName || '').toLowerCase();
+
+  if (q.includes('past paper') || q.includes('previous year') || q.includes('exam trend')) {
+    return `### 📄 Past Question Papers Status\n\n**Official Status**: Verified past-paper archives for Khalsa College / GNDU B.Voc. Textile Design & Apparel Technology are currently **unavailable** in the public repository.\n\n- **Academic Policy**: We do not generate unverified question paper statistics or artificial exam trends.\n- **Preparation Tip**: Focus on the official unit topics, practical lab procedures, and paper setter section layouts specified in your syllabus.`;
+  }
 
   if (q.includes('sewing') || q.includes('seam') || q.includes('french') || subj.includes('bvtd113')) {
     return `### 🧵 Sewing Techniques & Seam Engineering\n\n**Subject**: BVTD113 - Sewing Techniques (Practical)\n\n1. **Plain Seam**: Standard structural join formed right sides together at 1.5cm seam allowance.\n2. **French Seam**: Self-enclosed double stitch seam encasing raw edges inside a second fold; ideal for delicate and sheer fabrics.\n3. **Run & Fell Seam**: Double topstitched structural seam providing high strength for heavy cottons and denim.\n4. **Fullness Control**: Darts converge at the bust apex; pleats fold crisp lines; gathers distribute volume evenly.`;
