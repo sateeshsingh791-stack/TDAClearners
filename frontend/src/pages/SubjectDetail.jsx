@@ -12,7 +12,7 @@ export default function SubjectDetail() {
   useEffect(() => {
     setLoading(true);
     getSubjectByCode(code)
-      .then((res) => setSubject(res.data.data || res.data.subject || res.data))
+      .then((res) => setSubject(res.data.data?.subject || res.data.subject || res.data.data || res.data))
       .catch(() => setError('Could not load this subject.'))
       .finally(() => setLoading(false));
   }, [code]);

@@ -19,8 +19,8 @@ export default function GlobalSearch() {
     const q = query.toLowerCase();
     Promise.all([getSemesters(), getResources()])
       .then(([sem, res]) => {
-        const semesters = sem.data.data || sem.data.semesters || sem.data || [];
-        const resources = res.data.data || res.data.resources || res.data || [];
+        const semesters = sem.data.data?.semesters || sem.data.semesters || (Array.isArray(sem.data.data) ? sem.data.data : []);
+        const resources = res.data.data?.resources || res.data.resources || (Array.isArray(res.data.data) ? res.data.data : []);
 
         const subjects = [];
         const topics = [];

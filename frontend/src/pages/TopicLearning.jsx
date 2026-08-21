@@ -18,7 +18,7 @@ export default function TopicLearning() {
     setLoading(true);
     getTopicById(topicId)
       .then((res) => {
-        const t = res.data.data || res.data.topic || res.data;
+        const t = res.data.data?.topic || res.data.topic || res.data.data || res.data;
         setTopic(t);
         setDone(!!t.completed);
         setBookmarked(!!t.bookmarked);

@@ -15,7 +15,7 @@ export default function QuizHub() {
 
   useEffect(() => {
     getScopedQuizzes()
-      .then((res) => setQuizzes(res.data.data || res.data.quizzes || res.data || []))
+      .then((res) => setQuizzes(res.data.data?.questions || res.data.data?.quizzes || res.data.quizzes || (Array.isArray(res.data.data) ? res.data.data : [])))
       .catch(() => setError('Could not load quizzes.'))
       .finally(() => setLoading(false));
   }, []);

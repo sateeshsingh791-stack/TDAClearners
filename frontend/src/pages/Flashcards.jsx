@@ -13,7 +13,7 @@ export default function Flashcards() {
 
   useEffect(() => {
     getScopedFlashcards()
-      .then((res) => setCards(res.data.data || res.data.flashcards || res.data || []))
+      .then((res) => setCards(res.data.data?.flashcards || res.data.flashcards || (Array.isArray(res.data.data) ? res.data.data : [])))
       .catch(() => setError('Could not load flashcards.'))
       .finally(() => setLoading(false));
   }, []);

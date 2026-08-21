@@ -10,7 +10,10 @@ export default function SyllabusBrowser() {
 
   useEffect(() => {
     getSemesters()
-      .then((res) => setSemesters(res.data.data || res.data.semesters || res.data || []))
+      .then((res) => {
+        const list = res.data.data?.semesters || res.data.semesters || (Array.isArray(res.data.data) ? res.data.data : []);
+        setSemesters(list);
+      })
       .catch(() => setError('Could not load the syllabus.'))
       .finally(() => setLoading(false));
   }, []);

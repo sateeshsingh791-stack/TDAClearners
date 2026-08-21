@@ -18,8 +18,8 @@ export default function BookmarksProgress() {
     }
     Promise.all([getStudentProgress(), getQuizAttempts()])
       .then(([p, a]) => {
-        setProgress(p.data.data || p.data.progress || p.data);
-        setAttempts(a.data.data || a.data.attempts || a.data || []);
+        setProgress(p.data.data?.progress || p.data.progress || p.data.data || p.data);
+        setAttempts(a.data.data?.attempts || a.data.attempts || (Array.isArray(a.data.data) ? a.data.data : []));
       })
       .catch(() => setError('Could not load your progress.'))
       .finally(() => setLoading(false));

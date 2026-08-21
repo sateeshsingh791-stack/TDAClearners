@@ -9,7 +9,7 @@ export default function CareerIndustry() {
 
   useEffect(() => {
     getCareers()
-      .then((res) => setCareers(res.data.data || res.data.careers || res.data || []))
+      .then((res) => setCareers(res.data.data?.careers || res.data.careers || (Array.isArray(res.data.data) ? res.data.data : [])))
       .catch(() => setError('Could not load career paths.'))
       .finally(() => setLoading(false));
   }, []);

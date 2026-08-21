@@ -9,7 +9,7 @@ export default function Resources() {
 
   useEffect(() => {
     getResources()
-      .then((res) => setResources(res.data.data || res.data.resources || res.data || []))
+      .then((res) => setResources(res.data.data?.resources || res.data.resources || (Array.isArray(res.data.data) ? res.data.data : [])))
       .catch(() => setError('Could not load resources.'))
       .finally(() => setLoading(false));
   }, []);

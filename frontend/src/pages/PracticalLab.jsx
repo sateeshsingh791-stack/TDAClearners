@@ -10,7 +10,7 @@ export default function PracticalLab() {
 
   useEffect(() => {
     getPracticals()
-      .then((res) => setPracticals(res.data.data || res.data.practicals || res.data || []))
+      .then((res) => setPracticals(res.data.data?.practicals || res.data.practicals || (Array.isArray(res.data.data) ? res.data.data : [])))
       .catch(() => setError('Could not load the practical lab list.'))
       .finally(() => setLoading(false));
   }, []);
