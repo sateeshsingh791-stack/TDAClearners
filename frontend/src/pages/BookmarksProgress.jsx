@@ -1,109 +1,149 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { getStudentProgress, getQuizAttempts } from '../api/client';
-import { useAuth } from '../context/AuthContext';
-import { Loading, ErrorBlock, Empty } from '../components/StatusBlock';
+import { getSemesters } from '../api/client';
+import { Loading, ErrorBlock } from '../components/StatusBlock';
 
 export default function BookmarksProgress() {
-  const { user } = useAuth();
-  const [progress, setProgress] = useState(null);
-  const [attempts, setAttempts] = useState([]);
+  const [completedTopicIds, setCompletedTopicIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('tdac_completed_topics') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const [bookmarkedTopicIds, setBookmarkedTopicIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('tdac_bookmarked_topics') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const [semesters, setSemesters] = useState([]);
+  const [allTopics, setAllTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    Promise.all([getStudentProgress(), getQuizAttempts()])
-      .then(([p, a]) => {
-        setProgress(p.data.data?.progress || p.data.progress || p.data.data || p.data);
-        setAttempts(a.data.data?.attempts || a.data.attempts || (Array.isArray(a.data.data) ? a.data.data : []));
+    getSemesters()
+      .then((res) => {
+        const semList = res.data.data?.semesters || res.data.semesters || (Array.isArray(res.data.data) ? res.data.data : []);
+        setSemesters(semList);
+
+        const topicsList = [];
+        semList.forEach((sem) => {
+          (sem.subjects || []).forEach((sub) => {
+            (sub.units || []).forEach((u) => {
+              (u.topics || []).forEach((t) => {
+                topicsList.push({ ...t, subjectCode: sub.code, subjectName: sub.name, semesterNumber: sem.number });
+              });
+            });
+          });
+        });
+        setAllTopics(topicsList);
       })
-      .catch(() => setError('Could not load your progress.'))
+      .catch(() => setError('Could not load curriculum progress.'))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, []);
 
-  if (!user) {
-    return (
-      <div>
-        <p className="font-mono text-xs text-clay uppercase tracking-widest mb-2">09 — Progress</p>
-        <h1 className="font-display text-3xl mb-4">Log in to see your progress</h1>
-        <NavLink to="/login" className="text-moss font-medium">
-          Log in →
-        </NavLink>
-      </div>
-    );
-  }
+  const totalTopicsCount = allTopics.length || 1;
+  const completedCount = completedTopicIds.length;
+  const progressPercent = Math.round((completedCount / totalTopicsCount) * 100);
 
-  if (loading) return <Loading />;
-  if (error) return <ErrorBlock message={error} />;
+  const bookmarkedTopics = allTopics.filter((t) => bookmarkedTopicIds.includes(t.topicId));
 
-  const completedTopics = progress?.completedTopics || progress?.topics || [];
-  const bookmarks = progress?.bookmarks || [];
+  const removeBookmark = (id) => {
+    const updated = bookmarkedTopicIds.filter((bId) => bId !== id);
+    setBookmarkedTopicIds(updated);
+    localStorage.setItem('tdac_bookmarked_topics', JSON.stringify(updated));
+  };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
+      {/* Header */}
       <div>
-        <p className="font-mono text-xs text-clay uppercase tracking-widest mb-2">09 — Progress</p>
-        <h1 className="font-display text-3xl mb-6">Your journey so far</h1>
+        <p className="font-mono text-xs text-clay uppercase tracking-widest mb-1">09 — Student Learning Dashboard</p>
+        <h1 className="font-display text-3xl font-bold text-ink">Bookmarks & Learning Progress</h1>
+        <p className="text-slate text-sm">
+          Track your progress through the B.Voc Textile Design syllabus and access saved study topics (persisted locally).
+        </p>
       </div>
 
-      <section>
-        <h2 className="font-display text-xl mb-3">Bookmarked topics</h2>
-        {bookmarks.length === 0 ? (
-          <Empty title="No bookmarks yet" hint="Star a topic while learning to save it here." />
-        ) : (
-          <div className="grid sm:grid-cols-2 gap-3">
-            {bookmarks.map((b, i) => (
-              <NavLink
-                key={b._id || b.id || i}
-                to={`/topics/${b.topicId || b._id || b.id}`}
-                className="border border-ink/10 rounded-lg px-4 py-3 bg-white/30 hover:bg-ink hover:text-paper transition-colors focus-ring"
-              >
-                {b.title || b.name || 'Untitled topic'}
-              </NavLink>
-            ))}
-          </div>
-        )}
-      </section>
+      {loading && <Loading />}
+      {error && <ErrorBlock message={error} />}
 
-      <section>
-        <h2 className="font-display text-xl mb-3">Completed topics</h2>
-        {completedTopics.length === 0 ? (
-          <Empty title="No topics completed yet" hint="Mark topics complete as you go through them." />
-        ) : (
-          <ul className="space-y-2">
-            {completedTopics.map((t, i) => (
-              <li key={t._id || t.id || i} className="border border-ink/10 rounded-lg px-4 py-2.5 bg-white/30 text-sm">
-                {t.title || t.name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <h2 className="font-display text-xl mb-3">Quiz attempts</h2>
-        {attempts.length === 0 ? (
-          <Empty title="No quiz attempts yet" hint="Take a quiz from the Quiz Hub to see history here." />
-        ) : (
-          <div className="space-y-2">
-            {attempts.map((a, i) => (
-              <div
-                key={a._id || a.id || i}
-                className="flex items-center justify-between border border-ink/10 rounded-lg px-4 py-3 bg-white/30 text-sm"
-              >
-                <span>{a.quizTitle || a.quizId || `Attempt ${i + 1}`}</span>
-                <span className="font-mono text-clay">
-                  {a.score}/{a.total}
-                </span>
+      {!loading && !error && (
+        <>
+          {/* Progress Summary Cards */}
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="border border-moss/30 rounded-2xl bg-white p-5 shadow-xs space-y-2">
+              <span className="font-mono text-xs text-moss font-semibold uppercase">Overall Completion</span>
+              <div className="flex items-baseline justify-between">
+                <h2 className="font-display text-3xl font-bold text-moss">{progressPercent}%</h2>
+                <span className="font-mono text-xs text-slate">{completedCount} of {totalTopicsCount} Topics</span>
               </div>
-            ))}
+              <div className="w-full bg-paper rounded-full h-2 overflow-hidden border border-ink/5">
+                <div className="bg-moss h-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+              </div>
+            </div>
+
+            <div className="border border-clay/30 rounded-2xl bg-white p-5 shadow-xs space-y-2">
+              <span className="font-mono text-xs text-clay font-semibold uppercase">Bookmarked Items</span>
+              <div className="flex items-baseline justify-between">
+                <h2 className="font-display text-3xl font-bold text-clay">{bookmarkedTopicIds.length}</h2>
+                <span className="font-mono text-xs text-slate">Saved for Review</span>
+              </div>
+              <p className="text-[11px] text-slate font-mono">Quick reference study list</p>
+            </div>
+
+            <div className="border border-ink/15 rounded-2xl bg-white p-5 shadow-xs space-y-2">
+              <span className="font-mono text-xs text-ink font-semibold uppercase">Active Scheme</span>
+              <h2 className="font-display text-xl font-bold text-ink">1st Year (Sem 1 & 2)</h2>
+              <p className="text-[11px] text-slate font-mono">16 Subjects • 54 Credits Implemented</p>
+            </div>
           </div>
-        )}
-      </section>
+
+          {/* Bookmarked Topics List */}
+          <div className="border border-ink/15 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-3">
+              <h3 className="font-display text-xl font-bold text-ink">Bookmarked Topics ({bookmarkedTopics.length})</h3>
+              <span className="font-mono text-xs text-slate">Local Memory Persistence</span>
+            </div>
+
+            {bookmarkedTopics.length === 0 ? (
+              <p className="text-xs text-slate font-mono py-4 text-center">
+                No topics bookmarked yet. Click the star icon (★) on any topic page to save it here for fast review.
+              </p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-3">
+                {bookmarkedTopics.map((t) => (
+                  <div key={t.topicId} className="border border-ink/10 rounded-xl p-4 bg-paper/30 space-y-2 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between font-mono text-[10px] text-clay">
+                        <span>{t.subjectCode} • Sem {t.semesterNumber}</span>
+                        <button onClick={() => removeBookmark(t.topicId)} className="hover:underline text-clay">
+                          Remove ✕
+                        </button>
+                      </div>
+                      <h4 className="font-display font-semibold text-sm text-ink mt-1">{t.title}</h4>
+                      {t.overview && <p className="text-xs text-slate line-clamp-2 mt-0.5">{t.overview}</p>}
+                    </div>
+
+                    <NavLink
+                      to={`/topics/${t.topicId}`}
+                      className="text-xs font-mono text-moss font-semibold pt-2 border-t border-ink/5 flex items-center justify-between hover:underline"
+                    >
+                      <span>Study Notes</span>
+                      <span>→</span>
+                    </NavLink>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
