@@ -8,6 +8,7 @@ export const globalLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     error: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
@@ -22,6 +23,7 @@ export const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     error: { message: 'Too many authentication attempts, please try again later.' }
@@ -36,6 +38,7 @@ export const aiLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     error: { message: 'AI Tutor query limit reached. Please wait a minute before asking another question.' }

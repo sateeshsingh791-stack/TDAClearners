@@ -15,8 +15,11 @@ dotenv.config();
 
 const app = express();
 
+// Trust reverse proxy (Vercel / Cloudflare / Nginx / Render)
+app.set('trust proxy', 1);
+
 // Security headers
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 
 // CORS configuration
 const corsOrigin = process.env.CORS_ORIGIN || '*';
@@ -37,6 +40,14 @@ app.use(globalLimiter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'UP',
+    service: 'TDAClearners REST API & AI Proxy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'UP',
     service: 'TDAClearners REST API & AI Proxy',
