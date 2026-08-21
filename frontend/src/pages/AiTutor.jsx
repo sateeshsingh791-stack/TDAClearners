@@ -1,12 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { chatWithAiTutor } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 export default function AiTutor() {
   const { user } = useAuth();
+  const location = useLocation();
+  const initialContext = location.state?.academicContext || {};
+
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Ask me anything about your B.Voc Textile Design & Apparel Technology syllabus — I\'ll explain it in context.' }
+    {
+      role: 'assistant',
+      text: initialContext.subjectCode
+        ? `I am ready to help you with ${initialContext.subjectCode} (${initialContext.topicTitle || initialContext.subjectName || 'Syllabus'}). Ask any question!`
+        : 'Ask me anything about your B.Voc Textile Design & Apparel Technology syllabus — I\'ll explain it in context.'
+    }
   ]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -23,14 +31,24 @@ export default function AiTutor() {
     setMessages((m) => [...m, { role: 'user', text: question }]);
     setInput('');
     setBusy(true);
+
     try {
-      const res = await chatWithAiTutor({ userMessage: question, message: question });
-      const reply = res.data.data?.chatTurn?.text || res.data.data?.reply || res.data.reply || res.data.message || 'No response received.';
+      const res = await chatWithAiTutor({
+        userMessage: question,
+        academicContext: initialContext,
+        history: messages.map((m) => ({ role: m.role, text: m.text }))
+      });
+      const reply =
+        res.data.data?.chatTurn?.text ||
+        res.data.data?.reply ||
+        res.data.reply ||
+        res.data.message ||
+        'No response received.';
       setMessages((m) => [...m, { role: 'assistant', text: reply }]);
     } catch (err) {
       setMessages((m) => [
         ...m,
-        { role: 'assistant', text: 'Something went wrong reaching the tutor backend proxy. Please try again.' }
+        { role: 'assistant', text: 'Something went wrong reaching the AI Tutor service. Please try again.' }
       ]);
     } finally {
       setBusy(false);
@@ -51,7 +69,14 @@ export default function AiTutor() {
 
   return (
     <div className="max-w-2xl flex flex-col h-[calc(100vh-160px)]">
-      <p className="font-mono text-xs text-clay uppercase tracking-widest mb-2">06 — AI Tutor</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="font-mono text-xs text-clay uppercase tracking-widest">06 — AI Tutor</p>
+        {initialContext.subjectCode && (
+          <span className="text-xs font-mono bg-moss/10 text-moss px-2.5 py-0.5 rounded font-medium">
+            Context: {initialContext.subjectCode}
+          </span>
+        )}
+      </div>
       <h1 className="font-display text-3xl mb-4">Ask the AI Tutor</h1>
 
       <div className="flex-1 overflow-y-auto space-y-3 border border-ink/10 rounded-xl bg-white/30 p-4 mb-4">
