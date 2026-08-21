@@ -11,7 +11,8 @@ export default function SubjectDetail() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('UNITS'); // UNITS | PRACTICE | RESOURCES | EXAM_PREP
+  const [activeTab, setActiveTab] = useState('UNITS'); // UNITS | UNIT_NOTES | PRACTICE | RESOURCES | EXAM_PREP
+  const [expandedUnitNotes, setExpandedUnitNotes] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -160,6 +161,17 @@ export default function SubjectDetail() {
         </button>
 
         <button
+          onClick={() => setActiveTab('UNIT_NOTES')}
+          className={`pb-3 font-medium transition-colors border-b-2 whitespace-nowrap ${
+            activeTab === 'UNIT_NOTES'
+              ? 'border-moss text-moss font-semibold'
+              : 'border-transparent text-slate hover:text-ink'
+          }`}
+        >
+          📝 Unit-Wise Short Notes
+        </button>
+
+        <button
           onClick={() => setActiveTab('PRACTICE')}
           className={`pb-3 font-medium transition-colors border-b-2 whitespace-nowrap ${
             activeTab === 'PRACTICE'
@@ -249,7 +261,100 @@ export default function SubjectDetail() {
         </div>
       )}
 
-      {/* TAB CONTENT 2: PRACTICE & LAB */}
+      {/* TAB CONTENT 2: DEDICATED UNIT-WISE SHORT NOTES */}
+      {activeTab === 'UNIT_NOTES' && (
+        <div className="space-y-6">
+          <div className="bg-paper/80 border border-ink/10 rounded-2xl p-5 space-y-2">
+            <h3 className="font-display text-xl text-ink font-semibold">
+              Dedicated Unit-Wise Revision Short Notes
+            </h3>
+            <p className="text-xs text-slate">
+              Synthesized revision notes mapped directly to Khalsa College / GNDU B.Voc. syllabus units.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {units.map((unit) => {
+              const isOpen = expandedUnitNotes === unit.unitNumber || units.length === 1;
+              const unitTopics = unit.topics || [];
+
+              return (
+                <div key={unit.unitNumber} className="border border-ink/15 rounded-2xl bg-white p-5 shadow-xs space-y-4">
+                  {/* Unit Title Header */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 pb-3">
+                    <div>
+                      <span className="text-[10px] font-mono font-bold text-clay uppercase bg-clay/10 px-2 py-0.5 rounded">
+                        Unit {unit.unitNumber} Short Notes
+                      </span>
+                      <h4 className="font-display text-lg text-ink font-semibold mt-1">{unit.title}</h4>
+                    </div>
+
+                    <button
+                      onClick={() => setExpandedUnitNotes(isOpen ? null : unit.unitNumber)}
+                      className="text-xs font-mono px-3 py-1.5 rounded-lg border border-ink/15 bg-paper hover:bg-white transition-colors"
+                    >
+                      {isOpen ? 'Collapse Notes ▲' : 'Expand Notes ▼'}
+                    </button>
+                  </div>
+
+                  {/* Badges Strip */}
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                    <span className="bg-moss/15 text-moss px-2.5 py-0.5 rounded-full font-medium border border-moss/20">
+                      📌 Official Khalsa College Syllabus Source
+                    </span>
+                    <span className="bg-clay/10 text-clay px-2.5 py-0.5 rounded-full font-medium border border-clay/20">
+                      🤖 AI Study Recommendation — Based on Syllabus
+                    </span>
+                    <span className="bg-ink/5 text-slate px-2.5 py-0.5 rounded-full border border-ink/10">
+                      📄 Verified past-paper frequency data currently unavailable for this unit
+                    </span>
+                  </div>
+
+                  {isOpen && (
+                    <div className="space-y-4 pt-2 border-t border-ink/5 text-xs text-ink leading-relaxed">
+                      {unitTopics.map((t, idx) => (
+                        <div key={t.topicId || idx} className="p-4 rounded-xl bg-paper/40 border border-ink/10 space-y-2">
+                          <h5 className="font-display text-sm font-semibold text-moss">
+                            {idx + 1}. {t.title}
+                          </h5>
+
+                          {t.overview && <p className="text-slate">{t.overview}</p>}
+
+                          {t.keyPoints && t.keyPoints.length > 0 && (
+                            <div className="pt-1">
+                              <strong className="font-mono text-[11px] text-clay uppercase block mb-1">Key Revision Concepts:</strong>
+                              <ul className="list-disc list-inside space-y-1 text-slate">
+                                {t.keyPoints.map((kp, i) => (
+                                  <li key={i}>{kp}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {t.importantTerms && Object.keys(t.importantTerms).length > 0 && (
+                            <div className="pt-2">
+                              <strong className="font-mono text-[11px] text-moss uppercase block mb-1">Academic Terminology:</strong>
+                              <div className="grid sm:grid-cols-2 gap-2">
+                                {Object.entries(t.importantTerms).map(([term, def], i) => (
+                                  <div key={i} className="p-2 rounded bg-white border border-ink/5">
+                                    <strong className="text-ink">{term}:</strong> <span className="text-slate">{def}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT 3: PRACTICE & LAB */}
       {activeTab === 'PRACTICE' && (
         <div className="space-y-6">
           <div className="grid sm:grid-cols-2 gap-4">
@@ -309,7 +414,7 @@ export default function SubjectDetail() {
         </div>
       )}
 
-      {/* TAB CONTENT 3: RESOURCES */}
+      {/* TAB CONTENT 4: RESOURCES */}
       {activeTab === 'RESOURCES' && (
         <div className="space-y-4">
           {resources.length === 0 ? (
@@ -331,7 +436,7 @@ export default function SubjectDetail() {
         </div>
       )}
 
-      {/* TAB CONTENT 4: EXAM PREPARATION */}
+      {/* TAB CONTENT 5: EXAM PREPARATION */}
       {activeTab === 'EXAM_PREP' && (
         <div className="border border-ink/10 rounded-2xl bg-white p-6 space-y-4">
           <h3 className="font-display text-xl text-ink">Exam Pattern & Paper Setter Instructions</h3>
