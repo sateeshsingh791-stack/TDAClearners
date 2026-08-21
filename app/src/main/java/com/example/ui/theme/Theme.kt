@@ -23,8 +23,10 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = TextileOnSurfaceDark,
     surface = TextileSurfaceDark,
     onSurface = TextileOnSurfaceDark,
-    surfaceVariant = TextileSurfaceDark,
-    onSurfaceVariant = TextileOutlineVariant
+    surfaceVariant = TextileSurfaceVariantDark,
+    onSurfaceVariant = TextileOnSurfaceVariantDark,
+    outline = TextileOutline,
+    outlineVariant = TextileOutlineVariant
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -53,7 +55,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun BVocTextileDesignTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Set false to preserve our bespoke Khalsa College Textile palette
+    dynamicColor: Boolean = false, // Set false to preserve bespoke Khalsa College Textile palette
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

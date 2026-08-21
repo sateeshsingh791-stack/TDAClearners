@@ -19,9 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.CareerRole
 import com.example.data.repository.SyllabusRepository
 import com.example.ui.components.AppHeader
-import com.example.ui.theme.TerracottaContainer
-import com.example.ui.theme.TerracottaOnContainer
-import com.example.ui.theme.TerracottaPrimary
+import com.example.ui.theme.*
 
 @Composable
 fun CareerIndustryScreen(
@@ -33,7 +31,7 @@ fun CareerIndustryScreen(
         topBar = {
             AppHeader(
                 title = "Industry & Career Pathways",
-                subtitle = "Vocational Industry Opportunities",
+                subtitle = "TDAClearners • Career Pathways",
                 showBackButton = true,
                 onBackClick = onNavigateBack
             )
@@ -46,12 +44,12 @@ fun CareerIndustryScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(top = 10.dp, bottom = 28.dp)
         ) {
             item {
                 Surface(
                     shape = RoundedCornerShape(18.dp),
-                    color = TerracottaPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.fillMaxWidth().testTag("career_banner")
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -59,15 +57,16 @@ fun CareerIndustryScreen(
                             text = "B.Voc Graduate Career Scope",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Discover vocational career avenues across textile mills, apparel export houses, design ateliers, and entrepreneurship in North India and globally.",
+                            text = "Explore vocational career avenues across textile mills, apparel export houses, fashion design studios, and apparel entrepreneurship in North India and globally.",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color.White.copy(alpha = 0.85f),
-                                fontSize = 11.sp
+                                color = Color.White.copy(alpha = 0.9f),
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp
                             )
                         )
                     }
@@ -87,6 +86,7 @@ fun CareerRoleCard(role: CareerRole) {
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth().testTag("career_role_${role.title.replace(" ", "_")}")
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -97,13 +97,13 @@ fun CareerRoleCard(role: CareerRole) {
             ) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = TerracottaContainer
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
                         text = role.sector,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TerracottaOnContainer,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
@@ -113,14 +113,20 @@ fun CareerRoleCard(role: CareerRole) {
 
             Text(
                 text = role.title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = role.description,
-                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF64748B))
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 17.sp
+                )
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -129,7 +135,7 @@ fun CareerRoleCard(role: CareerRole) {
                 text = "⚡ Key Industry Competencies:",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = TerracottaPrimary
+                color = MaterialTheme.colorScheme.primary
             )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -138,13 +144,14 @@ fun CareerRoleCard(role: CareerRole) {
                 role.keySkills.take(3).forEach { skill ->
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = Color(0xFFF1F5F9)
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Text(
                             text = skill,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF334155),
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
@@ -156,7 +163,7 @@ fun CareerRoleCard(role: CareerRole) {
             Text(
                 text = "💻 Industry Standard CAD & Tools: ${role.standardTools.joinToString(", ")}",
                 fontSize = 10.sp,
-                color = Color(0xFF475569)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -165,7 +172,7 @@ fun CareerRoleCard(role: CareerRole) {
                 text = "📍 Regional Scope: ${role.industryScope}",
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF0F766E)
+                color = SuccessGreen
             )
         }
     }

@@ -79,8 +79,8 @@ fun AiTutorScreen(
                 ChatTurn(
                     id = "init",
                     role = "model",
-                    text = "### 🎓 Welcome to the B.Voc Textile Design AI Assistant!\n\n" +
-                            "I am specialized in your **Khalsa College Amritsar** syllabus (Guru Nanak Dev University NEP curriculum).\n\n" +
+                    text = "### 🎓 Welcome to the TDAClearners AI Academic Assistant!\n\n" +
+                            "I am specialized in your **TDAClearners — B.Voc Textile Design & Apparel Technology** curriculum (Khalsa College Amritsar / Guru Nanak Dev University NEP scheme).\n\n" +
                             "**What I can help you with:**\n" +
                             "- **Fibre Science & Identification**: Burning tests, chemical solubility, microscopic analysis (BVTD 111/112).\n" +
                             "- **Garment Construction**: SPI standards, seam classification, lockstitch tension & feed-dog adjustments (BVTD 113).\n" +
@@ -158,7 +158,7 @@ fun AiTutorScreen(
     Scaffold(
         topBar = {
             AppHeader(
-                title = "Gemini Academic Chatbot",
+                title = "TDAClearners AI Assistant",
                 subtitle = "${selectedRole.iconLabel} ${selectedRole.title} • ${selectedModel.displayName}",
                 showBackButton = true,
                 onBackClick = onNavigateBack,
@@ -179,7 +179,7 @@ fun AiTutorScreen(
                                 ChatTurn(
                                     id = System.currentTimeMillis().toString(),
                                     role = "model",
-                                    text = "### 🧹 Conversation Reset\n\nChat history cleared. How can I assist you with your Textile Design & Apparel studies?",
+                                    text = "### 🧹 Conversation Reset\n\nChat history cleared. How can I assist you with your TDAClearners Textile Design & Apparel studies?",
                                     modelUsed = selectedModel
                                 )
                             )

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="256dp"
+    android:height="256dp"
+    android:viewportWidth="256"
+    android:viewportHeight="256">
+
+    <!-- Outer Circular Boundary Background -->
+    <path
+        android:pathData="M128,128m-124,0a124,124 0 1,0 248,0a124,124 0 1,0 -248,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="256"
+                android:endY="256"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#0A192F" />
+                <item android:offset="0.5" android:color="#1E3A8A" />
+                <item android:offset="1.0" android:color="#4338CA" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Outer Purple Neon Ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#8B5CF6"
+        android:strokeWidth="6"
+        android:pathData="M128,128m-120,0a120,120 0 1,0 240,0a120,120 0 1,0 -240,0" />
+
+    <!-- Inner Clean White Circle Background -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M128,128m-112,0a112,112 0 1,0 224,0a112,112 0 1,0 -224,0" />
+
+    <!-- Upper Center Graduation Cap (Mortarboard) -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M128,24 L192,48 L128,72 L64,48 Z" />
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M100,64 L100,82 C100,94 156,94 156,82 L156,64 Z" />
+    <!-- Golden Tassel & Cord -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F59E0B"
+        android:strokeWidth="3"
+        android:pathData="M128,48 Q165,52 170,74" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M166,74 L174,74 L176,92 L164,92 Z" />
+
+    <!-- Stylized TDAC Central Art Piece -->
+    <!-- 'T' Letter (Left Deep Navy) -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M38,76 h36 v12 h-12 v44 h-12 v-44 h-12 Z" />
+
+    <!-- 'D' Letter (Graduated Navy to Blue) -->
+    <path
+        android:fillColor="#1E3A8A"
+        android:pathData="M78,76 h24 c18,0 26,10 26,28 c0,18 -8,28 -26,28 h-24 Z M92,88 v32 h10 c9,0 12,-6 12,-16 c0,-10 -3,-16 -12,-16 Z" />
+
+    <!-- 'A' Letter (Center Fashion Dress Silhouette Form - Fuchsia/Violet) -->
+    <path
+        android:fillColor="#8B5CF6"
+        android:pathData="M128,78 C122,88 120,98 114,120 C110,132 94,142 90,144 C112,144 144,144 166,144 C162,142 146,132 142,120 C136,98 134,88 128,78 Z" />
+    <path
+        android:fillColor="#C026D3"
+        android:pathData="M128,82 C124,96 112,124 104,144 C120,143 136,143 152,144 C144,124 132,96 128,82 Z" />
+
+    <!-- 'C' Letter (Right Tech Circuit / Play Node - Sky Blue) -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M208,86 c-6,-8 -16,-12 -26,-12 c-18,0 -30,14 -30,34 c0,20 12,34 30,34 c12,0 22,-5 27,-14 l-10,-6 c-3,5 -9,8 -17,8 c-12,0 -17,-9 -17,-22 c0,-13 5,-22 17,-22 c7,0 13,3 16,7 Z" />
+    <!-- Video Play Circle inside C -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M194,108m-12,0a12,12 0 1,0 24,0a12,12 0 1,0 -24,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M190,102 L200,108 L190,114 Z" />
+
+    <!-- Sewing Needle & Thread Spools (Left Accessories) -->
+    <path
+        android:fillColor="#64748B"
+        android:pathData="M60,54 L66,58 L54,120 L50,118 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#C026D3"
+        android:strokeWidth="2.5"
+        android:pathData="M62,56 C44,70 36,92 56,110 S90,126 110,138" />
+
+    <!-- Thread Spools -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M30,104 h16 v22 h-16 Z" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M28,102 h20 v3 h-20 Z M28,125 h20 v3 h-20 Z" />
+
+    <!-- Yellow Measuring Tape -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M24,124 Q40,140 76,134 Q100,130 114,142 L112,148 Q98,136 74,140 Q38,146 22,130 Z" />
+
+    <!-- Open Book & Laptop (Right Accessories) -->
+    <path
+        android:fillColor="#4338CA"
+        android:pathData="M166,134 C178,126 198,126 210,134 L210,146 C198,138 178,138 166,146 Z" />
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M198,114 h30 v20 h-30 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M201,117 h24 v14 h-24 Z" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M213,124m-2,0a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
+
+    <!-- Main Title Banner: TDAClearners -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M28,154 h200 v26 h-200 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,156 h192 v22 h-192 Z" />
+
+    <!-- Tagline: LEARN • PRACTICE • CREATE • GROW -->
+    <path
+        android:fillColor="#1E3A8A"
+        android:pathData="M48,186 h160 v12 h-160 Z" />
+
+    <!-- Subtitle Pill: B.Voc TEXTILE DESIGN & APPAREL TECHNOLOGY -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M52,204 h152 c6,0 10,4 10,10 c0,6 -4,10 -10,10 h-152 c-6,0 -10,-4 -10,-10 c0,-6 4,-10 10,-10 Z" />
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M60,208 h136 v12 h-136 Z" />
+
+    <!-- Bottom Decorative Flourish Ribbon -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#4338CA"
+        android:strokeWidth="2"
+        android:pathData="M76,236 Q128,246 180,236" />
+</vector>

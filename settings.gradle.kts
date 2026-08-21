@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "B.Voc Textile Design"
+rootProject.name = "TDAClearners"
 
 include(":app")

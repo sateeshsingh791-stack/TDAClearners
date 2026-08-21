@@ -23,7 +23,7 @@ class ExampleRobolectricTest {
   fun `read string from context`() {
     val context = ApplicationProvider.getApplicationContext<Context>()
     val appName = context.getString(R.string.app_name)
-    assertEquals("Textile Design", appName)
+    assertEquals("TDAClearners", appName)
   }
 
   @Test
@@ -87,5 +87,75 @@ class ExampleRobolectricTest {
     assertTrue(blocks.any { it is com.example.ui.components.MarkdownBlock.CodeBlock })
     assertTrue(blocks.any { it is com.example.ui.components.MarkdownBlock.BlockQuote })
     assertTrue(blocks.any { it is com.example.ui.components.MarkdownBlock.Table })
+  }
+
+  @Test
+  fun `verify quiz accuracy breakdown correctly identifies units and weak topics`() {
+    val bvtd111 = SyllabusRepository.getSubjectByCode("BVTD111")
+    assertNotNull(bvtd111)
+
+    val sampleQuestions = listOf(
+      com.example.data.model.QuizQuestion(
+        id = "q1",
+        question = "Cotton question",
+        options = listOf("A", "B", "C", "D"),
+        correctIndex = 1,
+        explanation = "Cotton explanation",
+        subjectCode = "BVTD111",
+        unitNumber = 1,
+        topicId = "bvtd111_u1_t1"
+      ),
+      com.example.data.model.QuizQuestion(
+        id = "q2",
+        question = "Wool question",
+        options = listOf("A", "B", "C", "D"),
+        correctIndex = 0,
+        explanation = "Wool explanation",
+        subjectCode = "BVTD111",
+        unitNumber = 1,
+        topicId = "bvtd111_u1_t1"
+      ),
+      com.example.data.model.QuizQuestion(
+        id = "q3",
+        question = "Spinning question",
+        options = listOf("A", "B", "C", "D"),
+        correctIndex = 2,
+        explanation = "Spinning explanation",
+        subjectCode = "BVTD111",
+        unitNumber = 2,
+        topicId = "bvtd111_u2_t1"
+      )
+    )
+
+    // User gets q1 right (index 1), q2 wrong (answered 3 instead of 0), q3 right (answered 2)
+    val userAnswers = mapOf(
+      0 to 1, // q1 correct (Unit 1, Topic 1)
+      1 to 3, // q2 WRONG (Unit 1, Topic 1)
+      2 to 2  // q3 correct (Unit 2, Topic 1)
+    )
+
+    val breakdowns = com.example.ui.components.calculateUnitAndTopicBreakdowns(sampleQuestions, userAnswers, bvtd111!!)
+    assertEquals(2, breakdowns.size)
+
+    val unit1 = breakdowns.find { it.unitNumber == 1 }
+    assertNotNull(unit1)
+    assertEquals(2, unit1?.totalCount)
+    assertEquals(1, unit1?.correctCount)
+    assertEquals(50, unit1?.accuracyPercent)
+    assertEquals(com.example.ui.components.UnitAccuracyStatus.MODERATE, unit1?.status)
+
+    // Check Topic breakdown for Unit 1
+    val topic1 = unit1?.topicBreakdowns?.find { it.topicId == "bvtd111_u1_t1" }
+    assertNotNull(topic1)
+    assertEquals(50, topic1?.accuracyPercent)
+    assertTrue(topic1?.isWeak == true)
+    assertEquals(1, topic1?.missedQuestions?.size)
+
+    val unit2 = breakdowns.find { it.unitNumber == 2 }
+    assertNotNull(unit2)
+    assertEquals(1, unit2?.totalCount)
+    assertEquals(1, unit2?.correctCount)
+    assertEquals(100, unit2?.accuracyPercent)
+    assertEquals(com.example.ui.components.UnitAccuracyStatus.MASTERED, unit2?.status)
   }
 }

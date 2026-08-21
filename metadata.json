@@ -1,7 +1,6 @@
 {
-  "name": "B.Voc Textile Design",
-  "description": "Educational learning platform and syllabus companion for B.Voc Textile Design & Apparel Technology at Khalsa College, Amritsar.",
+  "name": "TDAClearners",
+  "description": "Official learning platform, curriculum companion, quiz & practical hub for B.Voc Textile Design & Apparel Technology (TDAClearners).",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
-

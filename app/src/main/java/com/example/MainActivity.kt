@@ -36,7 +36,18 @@ sealed class Screen {
     data object Search : Screen()
     data object Career : Screen()
     data object Practicals : Screen()
-    data object QuizHub : Screen()
+    data class QuizHub(
+        val initialSemester: Int? = null,
+        val initialSubject: String? = null,
+        val initialUnit: Int? = null,
+        val initialTopic: String? = null
+    ) : Screen()
+    data class Flashcards(
+        val initialSemester: Int? = null,
+        val initialSubject: String? = null,
+        val initialUnit: Int? = null,
+        val initialTopic: String? = null
+    ) : Screen()
     data object Resources : Screen()
     data object Bookmarks : Screen()
     data class SubjectDetail(val code: String) : Screen()
@@ -86,7 +97,7 @@ fun MainApp() {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 8.dp,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1E7E2)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier.fillMaxWidth().height(64.dp)
                 ) {
                     Row(
@@ -108,7 +119,7 @@ fun MainApp() {
                             testTag = "nav_home"
                         )
                         BottomNavItem(
-                            label = "Courses",
+                            label = "Curriculum",
                             icon = Icons.Default.AutoStories,
                             isSelected = currentScreen is Screen.Syllabus,
                             onClick = {
@@ -130,7 +141,7 @@ fun MainApp() {
                             testTag = "nav_search"
                         )
                         BottomNavItem(
-                            label = "Career",
+                            label = "Careers",
                             icon = Icons.Default.WorkOutline,
                             isSelected = currentScreen is Screen.Career,
                             onClick = {
@@ -157,7 +168,8 @@ fun MainApp() {
                         onNavigateToSubject = { code -> navigateTo(Screen.SubjectDetail(code)) },
                         onNavigateToSyllabus = { navigateTo(Screen.Syllabus) },
                         onNavigateToPracticals = { navigateTo(Screen.Practicals) },
-                        onNavigateToQuizHub = { navigateTo(Screen.QuizHub) },
+                        onNavigateToQuizHub = { navigateTo(Screen.QuizHub()) },
+                        onNavigateToFlashcards = { navigateTo(Screen.Flashcards()) },
                         onNavigateToAiAssist = { navigateTo(Screen.AiTutor()) },
                         onNavigateToTopic = { topicId -> navigateTo(Screen.TopicLearning(topicId)) }
                     )
@@ -169,18 +181,43 @@ fun MainApp() {
                         subjectCode = screen.code,
                         onNavigateBack = { navigateBack() },
                         onNavigateToTopic = { topicId -> navigateTo(Screen.TopicLearning(topicId)) },
-                        onNavigateToPracticals = { navigateTo(Screen.Practicals) }
+                        onNavigateToPracticals = { navigateTo(Screen.Practicals) },
+                        onNavigateToQuiz = { sCode -> navigateTo(Screen.QuizHub(initialSubject = sCode)) },
+                        onNavigateToFlashcards = { sCode -> navigateTo(Screen.Flashcards(initialSubject = sCode)) }
                     )
                     is Screen.TopicLearning -> TopicLearningScreen(
                         topicId = screen.topicId,
                         onNavigateBack = { navigateBack() },
-                        onAskAiAboutTopic = { query -> navigateTo(Screen.AiTutor(query)) }
+                        onAskAiTutor = { query -> navigateTo(Screen.AiTutor(query)) },
+                        onPracticeQuiz = { sem, sCode, uNum, tId ->
+                            navigateTo(Screen.QuizHub(initialSemester = sem, initialSubject = sCode, initialUnit = uNum, initialTopic = tId))
+                        },
+                        onReviseFlashcards = { sem, sCode, uNum, tId ->
+                            navigateTo(Screen.Flashcards(initialSemester = sem, initialSubject = sCode, initialUnit = uNum, initialTopic = tId))
+                        }
                     )
                     is Screen.Practicals -> PracticalLabScreen(
                         onNavigateBack = { navigateBack() }
                     )
                     is Screen.QuizHub -> QuizHubScreen(
-                        onNavigateBack = { navigateBack() }
+                        initialSemester = screen.initialSemester,
+                        initialSubject = screen.initialSubject,
+                        initialUnit = screen.initialUnit,
+                        initialTopic = screen.initialTopic,
+                        onNavigateBack = { navigateBack() },
+                        onNavigateToFlashcards = { sem, subj, unit, topic ->
+                            navigateTo(Screen.Flashcards(initialSemester = sem, initialSubject = subj, initialUnit = unit, initialTopic = topic))
+                        }
+                    )
+                    is Screen.Flashcards -> FlashcardsScreen(
+                        initialSemester = screen.initialSemester,
+                        initialSubject = screen.initialSubject,
+                        initialUnit = screen.initialUnit,
+                        initialTopic = screen.initialTopic,
+                        onNavigateBack = { navigateBack() },
+                        onStartQuizForScope = { sem, subj, unit, topic ->
+                            navigateTo(Screen.QuizHub(initialSemester = sem, initialSubject = subj, initialUnit = unit, initialTopic = topic))
+                        }
                     )
                     is Screen.AiTutor -> AiTutorScreen(
                         initialQuery = screen.query,
@@ -226,13 +263,13 @@ fun BottomNavItem(
         if (isSelected) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = TerracottaContainer,
+                color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = label,
-                    tint = TerracottaPrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                         .size(20.dp)
@@ -242,7 +279,7 @@ fun BottomNavItem(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = Color(0xFF94A3B8),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -251,8 +288,8 @@ fun BottomNavItem(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontSize = 10.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isSelected) TerracottaPrimary else Color(0xFF94A3B8)
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         )
     }

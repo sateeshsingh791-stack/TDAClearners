@@ -16,15 +16,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.AcademicYear
-import com.example.data.model.Semester
 import com.example.data.model.Subject
+import com.example.data.model.SubjectType
 import com.example.data.repository.SyllabusRepository
 import com.example.ui.components.AppHeader
 import com.example.ui.components.CategoryBadge
-import com.example.ui.theme.TerracottaContainer
-import com.example.ui.theme.TerracottaOnContainer
-import com.example.ui.theme.TerracottaPrimary
+import com.example.ui.components.OfficialSyllabusBadge
+import com.example.ui.theme.*
 
 @Composable
 fun SyllabusBrowserScreen(
@@ -33,6 +31,7 @@ fun SyllabusBrowserScreen(
 ) {
     var selectedYearIndex by remember { mutableIntStateOf(0) }
     var selectedSemesterIndex by remember { mutableIntStateOf(0) }
+    var selectedTypeFilter by remember { mutableStateOf<SubjectType?>(null) } // null = All
 
     val currentYear = SyllabusRepository.academicYears[selectedYearIndex]
     val semesters = currentYear.semesters
@@ -41,7 +40,7 @@ fun SyllabusBrowserScreen(
         topBar = {
             AppHeader(
                 title = "Course Scheme & Syllabus",
-                subtitle = "Khalsa College Curriculum",
+                subtitle = "TDAClearners • Curriculum (NEP)",
                 showBackButton = true,
                 onBackClick = onNavigateBack
             )
@@ -54,7 +53,7 @@ fun SyllabusBrowserScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            // Year Selector Tabs (Year 1, Year 2, Year 3 scalable architecture)
+            // Year Selector Tabs (Year 1, Year 2, Year 3)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -67,10 +66,11 @@ fun SyllabusBrowserScreen(
                         onClick = {
                             selectedYearIndex = index
                             selectedSemesterIndex = 0
+                            selectedTypeFilter = null
                         },
                         label = { Text("Year ${year.yearNumber}", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = TerracottaPrimary,
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = Color.White
                         ),
                         modifier = Modifier.weight(1f).testTag("year_chip_${year.yearNumber}")
@@ -84,14 +84,24 @@ fun SyllabusBrowserScreen(
                     selectedTabIndex = selectedSemesterIndex,
                     edgePadding = 0.dp,
                     containerColor = Color.Transparent,
-                    contentColor = TerracottaPrimary,
+                    contentColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.fillMaxWidth().testTag("semester_tabs")
                 ) {
                     semesters.forEachIndexed { index, sem ->
                         Tab(
                             selected = selectedSemesterIndex == index,
-                            onClick = { selectedSemesterIndex = index },
-                            text = { Text(sem.title, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                            onClick = { 
+                                selectedSemesterIndex = index 
+                                selectedTypeFilter = null
+                            },
+                            text = {
+                                Text(
+                                    sem.title,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = if (selectedSemesterIndex == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         )
                     }
                 }
@@ -101,10 +111,11 @@ fun SyllabusBrowserScreen(
                 // Semester Metrics Summary Card
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = TerracottaContainer.copy(alpha = 0.45f),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 10.dp)
+                        .padding(vertical = 8.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -114,10 +125,55 @@ fun SyllabusBrowserScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         MetricItem("Total Credits", "${activeSemester.totalCredits}")
-                        VerticalDivider(modifier = Modifier.height(24.dp))
+                        VerticalDivider(modifier = Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant)
                         MetricItem("Max Marks", "${activeSemester.totalMarks}")
-                        VerticalDivider(modifier = Modifier.height(24.dp))
+                        VerticalDivider(modifier = Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant)
                         MetricItem("Hours/Wk", "${activeSemester.totalHoursPerWeek}")
+                    }
+                }
+
+                // Filter Row: All, Theory, Practical
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedTypeFilter == null,
+                        onClick = { selectedTypeFilter = null },
+                        label = { Text("All (${activeSemester.subjects.size})", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                    FilterChip(
+                        selected = selectedTypeFilter == SubjectType.THEORY,
+                        onClick = { selectedTypeFilter = SubjectType.THEORY },
+                        label = { Text("📚 Theory (${activeSemester.subjects.count { it.type == SubjectType.THEORY }})", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                    FilterChip(
+                        selected = selectedTypeFilter == SubjectType.PRACTICAL,
+                        onClick = { selectedTypeFilter = SubjectType.PRACTICAL },
+                        label = { Text("🧵 Practical (${activeSemester.subjects.count { it.type == SubjectType.PRACTICAL || it.type == SubjectType.THEORY_AND_PRACTICAL }})", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+
+                val filteredSubjects = activeSemester.subjects.filter { subject ->
+                    when (selectedTypeFilter) {
+                        null -> true
+                        SubjectType.THEORY -> subject.type == SubjectType.THEORY
+                        SubjectType.PRACTICAL -> subject.type == SubjectType.PRACTICAL || subject.type == SubjectType.THEORY_AND_PRACTICAL
+                        else -> true
                     }
                 }
 
@@ -127,7 +183,7 @@ fun SyllabusBrowserScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
-                    items(activeSemester.subjects) { subject ->
+                    items(filteredSubjects) { subject ->
                         SyllabusSubjectCard(
                             subject = subject,
                             onClick = { onNavigateToSubject(subject.code) }
@@ -135,7 +191,7 @@ fun SyllabusBrowserScreen(
                     }
                 }
             } else {
-                // Future Year Scalability Placeholder
+                // Semesters 3-6 / Coming Soon Placeholder
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -144,31 +200,44 @@ fun SyllabusBrowserScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Surface(
                             shape = RoundedCornerShape(20.dp),
-                            color = TerracottaContainer,
+                            color = MaterialTheme.colorScheme.primaryContainer,
                             modifier = Modifier.size(64.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Default.School,
-                                    contentDescription = "Upcoming Year",
-                                    tint = TerracottaOnContainer,
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = "Coming Soon",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
                         }
                         Text(
-                            text = "${currentYear.title} Roadmap",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            text = "${currentYear.title}",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
                         )
-                        Text(
-                            text = "The 1st-year NEP curriculum has been fully integrated. Year 2 and Year 3 modules will unlock automatically as the university releases further semester syllabi.",
-                            style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF64748B)),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        ) {
+                            Text(
+                                text = "🔒 Coming Soon: Learning resources and syllabus for this semester will be added soon as per university release.",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    lineHeight = 20.sp
+                                ),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -183,14 +252,15 @@ private fun MetricItem(label: String, value: String) {
             text = value,
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.ExtraBold,
-                color = TerracottaPrimary
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontSize = 10.sp,
-                color = Color(0xFF64748B)
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
         )
     }
@@ -206,6 +276,7 @@ fun SyllabusSubjectCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth().testTag("syllabus_subject_${subject.code.replace(" ", "_")}")
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -214,12 +285,32 @@ fun SyllabusSubjectCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CategoryBadge(category = subject.category)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    CategoryBadge(category = subject.category)
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (subject.type == SubjectType.PRACTICAL) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = if (subject.type == SubjectType.PRACTICAL) "🧵 Practical" else if (subject.type == SubjectType.THEORY_AND_PRACTICAL) "📚+🧵 Th+Prac" else "📚 Theory",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (subject.type == SubjectType.PRACTICAL) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    OfficialSyllabusBadge(label = "Official")
+                }
                 Text(
                     text = subject.syllabusPageRef,
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color(0xFF94A3B8),
-                        fontWeight = FontWeight.Medium
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
                     )
                 )
             }
@@ -228,14 +319,20 @@ fun SyllabusSubjectCard(
 
             Text(
                 text = "${subject.code}: ${subject.name}",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = subject.overview,
-                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF64748B)),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 16.sp
+                ),
                 maxLines = 2
             )
 
@@ -245,21 +342,22 @@ fun SyllabusSubjectCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF8FAFC), RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                     .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "L-T-P: ${subject.lectureCredits}-${subject.tutorialCredits}-${subject.practicalCredits} (${subject.totalCredits} Cr)",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF334155)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Marks: Th ${subject.theoryMarks ?: "-"} | P ${subject.practicalMarks ?: "-"} | IA ${subject.internalAssessmentMarks} = ${subject.totalMarks}",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TerracottaPrimary
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

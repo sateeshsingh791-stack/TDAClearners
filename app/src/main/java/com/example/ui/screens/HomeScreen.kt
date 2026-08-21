@@ -24,10 +24,10 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.Subject
 import com.example.data.repository.SyllabusRepository
 import com.example.data.repository.UserLearningRepository
+import com.example.ui.components.OfficialSyllabusBadge
 import com.example.ui.components.QuickActionButton
-import com.example.ui.theme.TerracottaContainer
-import com.example.ui.theme.TerracottaOnContainer
-import com.example.ui.theme.TerracottaPrimary
+import com.example.ui.components.TDAClearnersLogo
+import com.example.ui.theme.*
 
 @Composable
 fun HomeScreen(
@@ -35,6 +35,7 @@ fun HomeScreen(
     onNavigateToSyllabus: () -> Unit,
     onNavigateToPracticals: () -> Unit,
     onNavigateToQuizHub: () -> Unit,
+    onNavigateToFlashcards: () -> Unit,
     onNavigateToAiAssist: () -> Unit,
     onNavigateToTopic: (String) -> Unit
 ) {
@@ -51,7 +52,7 @@ fun HomeScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
-        // Top College Branding Header
+        // Top Branding Header with TDAClearners Official Logo
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -59,38 +60,48 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "KHALSA COLLEGE, AMRITSAR",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                        color = TerracottaPrimary
-                    )
-                )
-                Text(
-                    text = "B.Voc Textile Design",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                )
-            }
-            Surface(
-                shape = CircleShape,
-                color = TerracottaContainer,
-                border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),
-                modifier = Modifier.size(40.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
+                TDAClearnersLogo(
+                    size = 44.dp,
+                    showTextDetails = false
+                )
+                Column {
+                    Text(
+                        text = "TDAClearners",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.5.sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    )
+                    Text(
+                        text = "B.Voc Textile Design & Apparel Tech",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 0.2.sp
+                        )
+                    )
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "KC",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = TerracottaOnContainer
+                        text = "KC · GNDU",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
@@ -101,7 +112,7 @@ fun HomeScreen(
         // Hero Course Progress Card (High Density)
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = TerracottaPrimary,
+            color = MaterialTheme.colorScheme.primary,
             shadowElevation = 4.dp,
             modifier = Modifier.fillMaxWidth().testTag("hero_progress_card")
         ) {
@@ -117,23 +128,26 @@ fun HomeScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Course Progress",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color.White.copy(alpha = 0.85f),
-                                fontWeight = FontWeight.Medium
+                            text = "LEARN • PRACTICE • CREATE • GROW",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White.copy(alpha = 0.9f),
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 9.sp,
+                                letterSpacing = 0.8.sp
                             )
                         )
                         Text(
-                            text = "Year 1 · Sem $currentSemesterNum",
+                            text = "TDAClearners · Sem $currentSemesterNum",
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                         )
                         Text(
-                            text = "${currentSemester.totalCredits} Credits • ${currentSemester.totalMarks} Marks",
+                            text = "${currentSemester.totalCredits} Credits • ${currentSemester.totalMarks} Total Marks (NEP 2020)",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White.copy(alpha = 0.9f)
+                                color = Color.White.copy(alpha = 0.95f),
+                                fontWeight = FontWeight.Medium
                             )
                         )
                     }
@@ -144,13 +158,13 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(54.dp)
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.15f))
+                            .background(Color.White.copy(alpha = 0.2f))
                     ) {
                         CircularProgressIndicator(
                             progress = { if (progressPercentage == 0) 0.05f else semesterProgress },
                             modifier = Modifier.fillMaxSize().padding(4.dp),
                             color = Color.White,
-                            trackColor = Color.White.copy(alpha = 0.25f),
+                            trackColor = Color.White.copy(alpha = 0.3f),
                             strokeWidth = 4.dp
                         )
                         Text(
@@ -173,7 +187,7 @@ fun HomeScreen(
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp)),
                     color = Color.White,
-                    trackColor = Color.White.copy(alpha = 0.3f)
+                    trackColor = Color.White.copy(alpha = 0.35f)
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -186,7 +200,7 @@ fun HomeScreen(
                     Button(
                         onClick = onNavigateToSyllabus,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White.copy(alpha = 0.2f),
+                            containerColor = Color.White.copy(alpha = 0.25f),
                             contentColor = Color.White
                         ),
                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
@@ -215,10 +229,10 @@ fun HomeScreen(
                         onClick = {
                             UserLearningRepository.selectSemester(if (currentSemesterNum == 1) 2 else 1)
                         },
-                        label = { Text("Sem ${if (currentSemesterNum == 1) "II" else "I"}", fontSize = 10.sp, color = Color.White) },
+                        label = { Text("Sem ${if (currentSemesterNum == 1) "II" else "I"}", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White) },
                         colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color.White.copy(alpha = 0.15f),
-                            selectedContainerColor = Color.White.copy(alpha = 0.3f)
+                            containerColor = Color.White.copy(alpha = 0.2f),
+                            selectedContainerColor = Color.White.copy(alpha = 0.4f)
                         ),
                         border = null,
                         shape = RoundedCornerShape(20.dp),
@@ -230,20 +244,20 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Quick Actions Row (AI Assist, Practicals, Quiz Hub)
+        // Quick Actions Row (AI Assist, Practicals, Quiz Hub, Flashcards)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             QuickActionButton(
                 icon = Icons.Default.Lightbulb,
-                label = "AI Assist",
+                label = "AI Tutor",
                 onClick = onNavigateToAiAssist,
                 modifier = Modifier.weight(1f).testTag("quick_ai_assist")
             )
             QuickActionButton(
                 icon = Icons.Default.Science,
-                label = "Practicals",
+                label = "Lab Work",
                 onClick = onNavigateToPracticals,
                 modifier = Modifier.weight(1f).testTag("quick_practicals")
             )
@@ -252,6 +266,12 @@ fun HomeScreen(
                 label = "Quiz Hub",
                 onClick = onNavigateToQuizHub,
                 modifier = Modifier.weight(1f).testTag("quick_quiz_hub")
+            )
+            QuickActionButton(
+                icon = Icons.Default.Style,
+                label = "Flashcards",
+                onClick = onNavigateToFlashcards,
+                modifier = Modifier.weight(1f).testTag("quick_flashcards")
             )
         }
 
@@ -264,7 +284,7 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Academic Subjects (Sem $currentSemesterNum)",
+                text = "Course Subjects (Sem $currentSemesterNum)",
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -277,7 +297,7 @@ fun HomeScreen(
                 Text(
                     text = "View All (${currentSemester.subjects.size})",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = TerracottaPrimary,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -310,25 +330,30 @@ fun SubjectCompactCard(
 ) {
     val progress = UserLearningRepository.calculateSubjectProgress(subject.code)
     val iconEmoji = when {
-        subject.code.contains("111") || subject.code.contains("121") -> "🎨"
-        subject.code.contains("112") || subject.code.contains("123") -> "🔬"
-        subject.code.contains("113") || subject.code.contains("122") -> "✂️"
-        subject.code.contains("114") || subject.code.contains("124") -> "📈"
+        subject.code.contains("111") && subject.code.startsWith("BVTD") -> "🎨"
+        subject.code.contains("112") -> "🔬"
+        subject.code.contains("113") -> "🪡"
+        subject.code.contains("114") -> "💼"
+        subject.code.contains("121") && subject.code.startsWith("BVTD") -> "👗"
+        subject.code.contains("122") -> "✂️"
+        subject.code.contains("123") -> "🧵"
+        subject.code.contains("124") -> "📈"
         subject.code.contains("CS") -> "💻"
         subject.code.contains("BCSV") -> "🗣️"
-        subject.code.contains("BHPB") -> "🪡"
+        subject.code.contains("BHPB") -> "🏛️"
+        subject.code.contains("ZDA") -> "🛡️"
         else -> "🌿"
     }
 
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1E7E2)),
+        shadowElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier
             .fillMaxWidth()
-            .height(138.dp)
+            .height(144.dp)
             .testTag("subject_card_${subject.code.replace(" ", "_")}")
     ) {
         Column(
@@ -344,17 +369,18 @@ fun SubjectCompactCard(
             ) {
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = TerracottaContainer.copy(alpha = 0.5f),
-                    modifier = Modifier.size(30.dp)
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(text = iconEmoji, fontSize = 14.sp)
+                        Text(text = iconEmoji, fontSize = 15.sp)
                     }
                 }
 
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = Color(0xFFF3EBE6),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier.padding(2.dp)
                 ) {
                     Text(
@@ -362,9 +388,9 @@ fun SubjectCompactCard(
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TerracottaPrimary
+                            color = MaterialTheme.colorScheme.primary
                         ),
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                     )
                 }
             }
@@ -373,9 +399,9 @@ fun SubjectCompactCard(
                 Text(
                     text = subject.code,
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF94A3B8)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 )
                 Text(
@@ -383,7 +409,7 @@ fun SubjectCompactCard(
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
-                        lineHeight = 14.sp
+                        lineHeight = 15.sp
                     ),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -399,7 +425,8 @@ fun SubjectCompactCard(
                     text = "${subject.units.size} Units • ${subject.type.label}",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 9.sp,
-                        color = Color(0xFF64748B)
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
 
@@ -410,9 +437,9 @@ fun SubjectCompactCard(
                         .clip(CircleShape)
                         .background(
                             when {
-                                progress >= 0.8f -> Color(0xFF22C55E)
-                                progress > 0.1f -> Color(0xFFEAB308)
-                                else -> Color(0xFFCBD5E1)
+                                progress >= 0.8f -> SuccessGreen
+                                progress > 0.1f -> WarningAmber
+                                else -> MaterialTheme.colorScheme.outline
                             }
                         )
                 )

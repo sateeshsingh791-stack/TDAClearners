@@ -19,9 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.CourseResource
 import com.example.data.repository.SyllabusRepository
 import com.example.ui.components.AppHeader
-import com.example.ui.theme.TerracottaContainer
-import com.example.ui.theme.TerracottaOnContainer
-import com.example.ui.theme.TerracottaPrimary
+import com.example.ui.theme.*
 
 @Composable
 fun ResourcesScreen(
@@ -37,7 +35,7 @@ fun ResourcesScreen(
         topBar = {
             AppHeader(
                 title = "Resource & Notes Library",
-                subtitle = "Study Materials & Manuals",
+                subtitle = "TDAClearners • Study Materials",
                 showBackButton = true,
                 onBackClick = onNavigateBack
             )
@@ -63,7 +61,7 @@ fun ResourcesScreen(
                         onClick = { selectedFilter = cat },
                         label = { Text(cat, fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = TerracottaPrimary,
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = Color.White
                         )
                     )
@@ -73,7 +71,7 @@ fun ResourcesScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                contentPadding = PaddingValues(top = 4.dp, bottom = 28.dp)
             ) {
                 items(filtered) { res ->
                     ResourceCard(resource = res)
@@ -90,6 +88,8 @@ fun ResourceCard(resource: CourseResource) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth().testTag("resource_card_${resource.id}")
     ) {
         Row(
@@ -106,13 +106,13 @@ fun ResourceCard(resource: CourseResource) {
                 ) {
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = TerracottaContainer
+                        color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
                             text = resource.category,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TerracottaOnContainer,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
@@ -120,7 +120,7 @@ fun ResourceCard(resource: CourseResource) {
                         text = resource.subjectCode,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -128,14 +128,20 @@ fun ResourceCard(resource: CourseResource) {
 
                 Text(
                     text = resource.title,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
                     text = resource.description,
-                    style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF64748B)),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 16.sp
+                    ),
                     fontSize = 11.sp
                 )
 
@@ -144,8 +150,9 @@ fun ResourceCard(resource: CourseResource) {
                 Text(
                     text = "${resource.format} • ${resource.downloadSize}",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color(0xFF94A3B8),
-                        fontSize = 10.sp
+                        color = MaterialTheme.colorScheme.outline,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 )
             }
@@ -153,8 +160,8 @@ fun ResourceCard(resource: CourseResource) {
             IconButton(
                 onClick = { isDownloaded = !isDownloaded },
                 colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = if (isDownloaded) Color(0xFFDCFCE7) else Color(0xFFF1F5F9),
-                    contentColor = if (isDownloaded) Color(0xFF16A34A) else TerracottaPrimary
+                    containerColor = if (isDownloaded) SuccessGreenContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (isDownloaded) SuccessGreen else MaterialTheme.colorScheme.primary
                 )
             ) {
                 Icon(

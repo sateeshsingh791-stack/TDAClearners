@@ -19,9 +19,8 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.PracticalActivity
 import com.example.data.repository.SyllabusRepository
 import com.example.ui.components.AppHeader
-import com.example.ui.theme.TerracottaContainer
-import com.example.ui.theme.TerracottaOnContainer
-import com.example.ui.theme.TerracottaPrimary
+import com.example.ui.components.OfficialSyllabusBadge
+import com.example.ui.theme.*
 
 @Composable
 fun PracticalLabScreen(
@@ -33,7 +32,7 @@ fun PracticalLabScreen(
         topBar = {
             AppHeader(
                 title = "Practical Laboratory",
-                subtitle = "Hands-on Vocational Training",
+                subtitle = "TDAClearners • Vocational Lab",
                 showBackButton = true,
                 onBackClick = onNavigateBack
             )
@@ -46,12 +45,13 @@ fun PracticalLabScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(top = 10.dp, bottom = 28.dp)
         ) {
             item {
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = TerracottaContainer,
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
                     modifier = Modifier.fillMaxWidth().testTag("practical_lab_banner")
                 ) {
                     Row(
@@ -61,7 +61,7 @@ fun PracticalLabScreen(
                         Icon(
                             imageVector = Icons.Default.Science,
                             contentDescription = null,
-                            tint = TerracottaOnContainer,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
@@ -69,14 +69,14 @@ fun PracticalLabScreen(
                             Text(
                                 text = "Vocational Lab Worksheets",
                                 style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = TerracottaOnContainer
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             )
                             Text(
-                                text = "Procedures, observations, safety precautions & viva voice Q&As.",
+                                text = "Procedures, machine anatomy, seams, plackets, sleeves, collars & viva voice Q&As.",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = TerracottaOnContainer.copy(alpha = 0.85f),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
                                     fontSize = 11.sp
                                 )
                             )
@@ -100,6 +100,7 @@ fun PracticalActivityCard(practical: PracticalActivity) {
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth().testTag("practical_card_${practical.id}")
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -110,39 +111,55 @@ fun PracticalActivityCard(practical: PracticalActivity) {
             ) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFF1F5F9)
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
                         text = practical.subjectCode,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TerracottaPrimary,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
-                Text(
-                    text = "LAB EXPERIMENT",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color(0xFF94A3B8),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 9.sp
-                    )
-                )
+                OfficialSyllabusBadge(label = practical.sourceLabel)
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = practical.title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = "🎯 Objective: ${practical.objective}",
-                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF334155), fontWeight = FontWeight.Medium)
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 17.sp
+                )
             )
+
+            if (practical.theory.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "📖 Construction Theory:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = practical.theory,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 16.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -151,12 +168,12 @@ fun PracticalActivityCard(practical: PracticalActivity) {
                 text = "📦 Materials & Apparatus:",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = TerracottaPrimary
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = practical.materialsRequired.joinToString(", "),
                 fontSize = 11.sp,
-                color = Color(0xFF64748B)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -173,8 +190,18 @@ fun PracticalActivityCard(practical: PracticalActivity) {
                     modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                     verticalAlignment = Alignment.Top
                 ) {
-                    Text("${index + 1}. ", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TerracottaPrimary)
-                    Text(text = step, fontSize = 11.sp, color = Color(0xFF334155))
+                    Text(
+                        "${index + 1}. ",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = step,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 16.sp
+                    )
                 }
             }
 
@@ -183,7 +210,8 @@ fun PracticalActivityCard(practical: PracticalActivity) {
             // Expected Observations
             Surface(
                 shape = RoundedCornerShape(10.dp),
-                color = Color(0xFFF0FDF4),
+                color = SuccessGreenContainer,
+                border = androidx.compose.foundation.BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.3f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
@@ -191,27 +219,33 @@ fun PracticalActivityCard(practical: PracticalActivity) {
                         text = "🔬 Expected Result & Observations",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF15803D)
+                        color = SuccessGreenOnContainer
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = practical.expectedObservations,
                         fontSize = 11.sp,
-                        color = Color(0xFF166534)
+                        color = SuccessGreenOnContainer,
+                        lineHeight = 16.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Precautions
-            Text(
-                text = "⚠️ Laboratory Safety & Precautions:",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFFDC2626)
-            )
-            practical.precautions.forEach { prec ->
-                Text("• $prec", fontSize = 10.sp, color = Color(0xFF991B1B))
+            if (practical.precautions.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "⚠️ Laboratory Safety & Precautions:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ErrorRed
+                )
+                practical.precautions.forEach { prec ->
+                    Text(
+                        "• $prec",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -220,15 +254,15 @@ fun PracticalActivityCard(practical: PracticalActivity) {
             Button(
                 onClick = { expandedViva = !expandedViva },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF8FAFC),
-                    contentColor = TerracottaPrimary
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.primary
                 ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.fillMaxWidth().height(36.dp)
+                modifier = Modifier.fillMaxWidth().height(38.dp)
             ) {
                 Text(
-                    text = if (expandedViva) "Hide Viva Questions (${practical.vivaQuestions.size})" else "Show Viva Voce Questions (${practical.vivaQuestions.size})",
+                    text = if (expandedViva) "Hide Viva Voce Questions (${practical.vivaQuestions.size})" else "Show Viva Voce Questions (${practical.vivaQuestions.size})",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -239,13 +273,24 @@ fun PracticalActivityCard(practical: PracticalActivity) {
                 practical.vivaQuestions.forEachIndexed { i, (q, a) ->
                     Card(
                         shape = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
+                        colors = CardDefaults.cardColors(containerColor = WarningAmberContainer),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, WarningAmber.copy(alpha = 0.3f)),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)
                     ) {
                         Column(modifier = Modifier.padding(10.dp)) {
-                            Text("Q${i + 1}: $q", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF92400E))
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text("Ans: $a", fontSize = 11.sp, color = Color(0xFF78350F))
+                            Text(
+                                "Q${i + 1}: $q",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = WarningAmberOnContainer
+                            )
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(
+                                "Ans: $a",
+                                fontSize = 11.sp,
+                                color = WarningAmberOnContainer,
+                                lineHeight = 16.sp
+                            )
                         }
                     }
                 }

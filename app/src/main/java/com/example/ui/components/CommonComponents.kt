@@ -2,6 +2,7 @@ package com.example.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -24,40 +25,48 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CourseCategory
-import com.example.ui.theme.TerracottaContainer
-import com.example.ui.theme.TerracottaOnContainer
-import com.example.ui.theme.TerracottaPrimary
+import com.example.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppHeader(
     title: String,
-    subtitle: String = "Khalsa College, Amritsar",
+    subtitle: String = "TDAClearners • B.Voc Textile Design",
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
+    showBrandLogo: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
         title = {
-            Column {
-                Text(
-                    text = subtitle.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TerracottaPrimary
-                    ),
-                    maxLines = 1
-                )
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (showBrandLogo && !showBackButton) {
+                    TDAClearnersHeaderLogo(size = 32.dp)
+                } else {
+                    Column {
+                        Text(
+                            text = subtitle.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                letterSpacing = 0.8.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary
+                            ),
+                            maxLines = 1
+                        )
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         },
         navigationIcon = {
@@ -66,37 +75,101 @@ fun AppHeader(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = TerracottaPrimary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
         },
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.background,
+            scrolledContainerColor = MaterialTheme.colorScheme.surface
         )
     )
 }
 
 @Composable
 fun CategoryBadge(category: CourseCategory, modifier: Modifier = Modifier) {
-    val bgColor = Color(category.badgeColorHex).copy(alpha = 0.15f)
-    val textColor = Color(category.badgeColorHex)
-
+    val baseColor = Color(category.badgeColorHex)
     Surface(
-        color = bgColor,
-        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = RoundedCornerShape(8.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
         modifier = modifier
     ) {
         Text(
             text = category.displayName,
-            color = textColor,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 10.sp
             ),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
         )
+    }
+}
+
+@Composable
+fun OfficialSyllabusBadge(
+    label: String = "Official University Syllabus",
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = SuccessGreenContainer,
+        border = androidx.compose.foundation.BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.4f)),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Verified,
+                contentDescription = null,
+                tint = SuccessGreen,
+                modifier = Modifier.size(11.dp)
+            )
+            Spacer(modifier = Modifier.width(3.dp))
+            Text(
+                text = label,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = SuccessGreenOnContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun ResearchedContentBadge(
+    label: String = "Researched Study Material",
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = InfoSkyContainer,
+        border = androidx.compose.foundation.BorderStroke(1.dp, InfoSky.copy(alpha = 0.4f)),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = null,
+                tint = InfoSky,
+                modifier = Modifier.size(11.dp)
+            )
+            Spacer(modifier = Modifier.width(3.dp))
+            Text(
+                text = label,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = InfoSkyOnContainer
+            )
+        }
     }
 }
 
@@ -110,7 +183,8 @@ fun QuickActionButton(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        color = TerracottaContainer,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
         modifier = modifier.height(64.dp)
     ) {
         Column(
@@ -123,7 +197,7 @@ fun QuickActionButton(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = TerracottaOnContainer,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -132,7 +206,7 @@ fun QuickActionButton(
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp,
-                    color = TerracottaOnContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 maxLines = 1
             )
@@ -150,7 +224,8 @@ fun WeavePatternCanvas(
             .fillMaxWidth()
             .height(130.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFFFF7ED))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
             .padding(12.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -160,7 +235,6 @@ fun WeavePatternCanvas(
             val cellHeight = size.height / rows
             val warpColor = Color(0xFFB34700)
             val weftColor = Color(0xFFE2E8F0)
-            val borderColor = Color(0xFFCBD5E1)
 
             for (r in 0 until rows) {
                 for (c in 0 until cols) {

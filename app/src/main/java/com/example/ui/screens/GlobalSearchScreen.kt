@@ -20,9 +20,8 @@ import com.example.data.model.Subject
 import com.example.data.model.TopicContent
 import com.example.data.repository.SyllabusRepository
 import com.example.ui.components.AppHeader
-import com.example.ui.theme.TerracottaContainer
-import com.example.ui.theme.TerracottaOnContainer
-import com.example.ui.theme.TerracottaPrimary
+import com.example.ui.components.OfficialSyllabusBadge
+import com.example.ui.theme.*
 
 @Composable
 fun GlobalSearchScreen(
@@ -56,7 +55,7 @@ fun GlobalSearchScreen(
         topBar = {
             AppHeader(
                 title = "Global Syllabus Search",
-                subtitle = "Khalsa College Course Search",
+                subtitle = "TDAClearners • Course Search",
                 showBackButton = true,
                 onBackClick = onNavigateBack
             )
@@ -72,12 +71,12 @@ fun GlobalSearchScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search subjects, fibres, weaves, seams, terms...", fontSize = 12.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TerracottaPrimary) },
+                placeholder = { Text("Search subjects, fibres, weaves, seams, entrepreneurship...", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
                 },
@@ -86,7 +85,13 @@ fun GlobalSearchScreen(
                     .padding(vertical = 10.dp)
                     .testTag("global_search_input"),
                 shape = RoundedCornerShape(16.dp),
-                singleLine = true
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                )
             )
 
             if (searchQuery.isBlank()) {
@@ -98,21 +103,33 @@ fun GlobalSearchScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.ManageSearch, contentDescription = null, tint = Color(0xFFCBD5E1), modifier = Modifier.size(54.dp))
-                        Text("Search syllabus topics, subjects or definitions", color = Color(0xFF94A3B8), fontSize = 13.sp)
+                        Icon(
+                            imageVector = Icons.Default.ManageSearch,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(54.dp)
+                        )
+                        Text(
+                            text = "Search syllabus topics, subjects, practicals or definitions",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 13.sp
+                        )
                     }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(bottom = 20.dp)
+                    contentPadding = PaddingValues(bottom = 24.dp)
                 ) {
                     if (matchedSubjects.isNotEmpty()) {
                         item {
                             Text(
                                 text = "Subjects (${matchedSubjects.size})",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = TerracottaPrimary)
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             )
                         }
                         items(matchedSubjects) { sub ->
@@ -120,11 +137,23 @@ fun GlobalSearchScreen(
                                 onClick = { onNavigateToSubject(sub.code) },
                                 shape = RoundedCornerShape(14.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(text = "${sub.code}: ${sub.name}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                    Text(text = sub.overview, fontSize = 11.sp, color = Color(0xFF64748B), maxLines = 2)
+                                    Text(
+                                        text = "${sub.code}: ${sub.name}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = sub.overview,
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2
+                                    )
                                 }
                             }
                         }
@@ -134,7 +163,10 @@ fun GlobalSearchScreen(
                         item {
                             Text(
                                 text = "Topics & Concepts (${matchedTopics.size})",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = TerracottaPrimary),
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                ),
                                 modifier = Modifier.padding(top = 10.dp)
                             )
                         }
@@ -143,11 +175,23 @@ fun GlobalSearchScreen(
                                 onClick = { onNavigateToTopic(topic.id) },
                                 shape = RoundedCornerShape(14.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(text = topic.title, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                    Text(text = topic.overview, fontSize = 11.sp, color = Color(0xFF64748B), maxLines = 2)
+                                    Text(
+                                        text = topic.title,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = topic.overview,
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2
+                                    )
                                 }
                             }
                         }
@@ -159,7 +203,11 @@ fun GlobalSearchScreen(
                                 modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("No matching syllabus results found for \"$searchQuery\"", color = Color(0xFF94A3B8), fontSize = 13.sp)
+                                Text(
+                                    text = "No matching syllabus results found for \"$searchQuery\"",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 13.sp
+                                )
                             }
                         }
                     }

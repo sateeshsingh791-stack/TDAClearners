@@ -20,9 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.repository.SyllabusRepository
 import com.example.data.repository.UserLearningRepository
 import com.example.ui.components.AppHeader
-import com.example.ui.theme.TerracottaContainer
-import com.example.ui.theme.TerracottaOnContainer
-import com.example.ui.theme.TerracottaPrimary
+import com.example.ui.theme.*
 
 @Composable
 fun BookmarksProgressScreen(
@@ -39,7 +37,7 @@ fun BookmarksProgressScreen(
         topBar = {
             AppHeader(
                 title = "My Learning & Bookmarks",
-                subtitle = "Academic Progress Tracker",
+                subtitle = "TDAClearners • Progress Tracker",
                 showBackButton = true,
                 onBackClick = onNavigateBack
             )
@@ -52,19 +50,19 @@ fun BookmarksProgressScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(top = 10.dp, bottom = 28.dp)
         ) {
             // Summary Progress Card
             item {
                 Surface(
                     shape = RoundedCornerShape(18.dp),
-                    color = TerracottaPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.fillMaxWidth().testTag("bookmarks_summary_card")
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "Learning Portfolio",
-                            style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.Bold)
+                            style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.ExtraBold)
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         Row(
@@ -72,16 +70,16 @@ fun BookmarksProgressScreen(
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("${completedTopics.size}", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-                                Text("Completed", color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp)
+                                Text("${completedTopics.size}", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                                Text("Completed", color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp)
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("${bookmarkedTopics.size}", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-                                Text("Bookmarked", color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp)
+                                Text("${bookmarkedTopics.size}", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                                Text("Bookmarked", color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp)
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("${learningState.quizScores.size}", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-                                Text("Quizzes", color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp)
+                                Text("${learningState.quizScores.size}", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                                Text("Quizzes", color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp)
                             }
                         }
                     }
@@ -92,13 +90,20 @@ fun BookmarksProgressScreen(
             item {
                 Text(
                     text = "Saved Bookmarks (${bookmarkedTopics.size})",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = TerracottaPrimary)
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 )
             }
 
             if (bookmarkedTopics.isEmpty()) {
                 item {
-                    Text("No topics bookmarked yet. Tap the bookmark icon while studying any topic to save it for quick revision.", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                    Text(
+                        "No topics bookmarked yet. Tap the bookmark icon while studying any topic to save it for quick revision.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp
+                    )
                 }
             } else {
                 items(bookmarkedTopics) { topic ->
@@ -106,6 +111,7 @@ fun BookmarksProgressScreen(
                         onClick = { onNavigateToTopic(topic.id) },
                         shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                         modifier = Modifier.fillMaxWidth().testTag("saved_bookmark_${topic.id}")
                     ) {
                         Row(
@@ -114,11 +120,20 @@ fun BookmarksProgressScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(text = topic.title, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                Text(text = "${topic.keyPoints.size} Key Concepts • Revision Notes", fontSize = 11.sp, color = Color(0xFF64748B))
+                                Text(
+                                    text = topic.title,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "${topic.keyPoints.size} Key Concepts • Revision Notes",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                             IconButton(onClick = { UserLearningRepository.toggleBookmark(topic.id) }) {
-                                Icon(Icons.Default.Bookmark, contentDescription = "Remove Bookmark", tint = TerracottaPrimary)
+                                Icon(Icons.Default.Bookmark, contentDescription = "Remove Bookmark", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -129,33 +144,42 @@ fun BookmarksProgressScreen(
             item {
                 Text(
                     text = "📝 Semester Exam Revision Checklist",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 )
             }
 
             val checklist = listOf(
                 "Classification of Natural & Synthetic Fibres (BVTD 111)",
+                "Sewing Techniques & Machine Anatomy (BVTD 112)",
+                "Introduction to Entrepreneurship & MSME (BVTD 113)",
                 "Burning Test & Microscopic Analysis Lab Procedures (BVTD 112)",
-                "Industrial Lockstitch Machine Anatomy & Tension Balancing (BVTD 113)",
                 "5 Stages of the Fashion Life Cycle (BVTD 121)",
                 "Plain (1/1) vs Twill (2/2) Weave Interlacement Graphing (BVTD 123)",
-                "Traditional Phulkari Motifs & Embroidery Heritage (BHPB 1101)"
+                "Traditional Phulkari Motifs & Punjab Heritage (BHPB 1101)"
             )
 
             items(checklist) { item ->
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFFF8FAFC),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = item, fontSize = 11.sp, color = Color(0xFF334155), fontWeight = FontWeight.Medium)
+                        Text(
+                            text = item,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }

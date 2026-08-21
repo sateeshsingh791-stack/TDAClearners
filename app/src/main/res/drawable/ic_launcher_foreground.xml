@@ -1,15 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Graduation Cap Top -->
     <path
-        android:fillColor="#FFDBCB"
-        android:pathData="M38,32h32v8h-32z M34,44h40v8h-40z M30,56h48v8h-48z M34,68h40v8h-40z M38,80h32v8h-32z" />
+        android:fillColor="#38BDF8"
+        android:pathData="M54,26 L76,35 L54,44 L32,35 Z" />
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M44,40 L44,48 C44,52 64,52 64,48 L64,40 Z" />
+    <!-- Tassel -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M68,36 L74,44 L72,48 L70,44 Z" />
+
+    <!-- Stylized Monogram "TDAC" -->
+    <!-- 'T' Bar and Stem -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M48,26h12v68h-12z" />
+        android:pathData="M30,48 h16 v4 h-6 v20 h-4 v-20 h-6 Z" />
+
+    <!-- 'D' -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,20L62,32H46z" />
+        android:pathData="M48,48 h8 c5,0 8,3 8,12 c0,9 -3,12 -8,12 h-8 Z M52,52 v16 h4 c3,0 4,-2 4,-8 c0,-6 -1,-8 -4,-8 Z" />
+
+    <!-- 'A' -->
+    <path
+        android:fillColor="#C026D3"
+        android:pathData="M68,72 L73,48 h4 L82,72 h-4 L76.5,58 h-3 L72,72 Z M74,54 h2 L75,50 Z" />
+
+    <!-- 'C' -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M88,52 c-2,-3 -5,-4 -8,-4 c-6,0 -9,5 -9,12 c0,7 3,12 9,12 c4,0 7,-2 8,-5 l-3,-2 c-1,2 -3,3 -5,3 c-4,0 -5,-3 -5,-8 c0,-5 1,-8 5,-8 c2,0 4,1 5,3 Z" />
+
+    <!-- Sewing Needle & Curved Thread -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M26,38 L30,42 L28,68 L26,68 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#C026D3"
+        android:strokeWidth="1.5"
+        android:pathData="M27,40 Q20,50 30,58 T45,72" />
+
+    <!-- Thread Spool on left -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M22,64 h6 v10 h-6 Z" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M20,63 h10 v2 h-10 Z M20,73 h10 v2 h-10 Z" />
+
+    <!-- Bottom Brand Label Banner -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,80 h40 c2,0 4,2 4,4 v4 c0,2 -2,4 -4,4 h-40 c-2,0 -4,-2 -4,-4 v-4 c0,-2 2,-4 4,-4 Z" />
+    <path
+        android:fillColor="#1E3A8A"
+        android:pathData="M38,84 h32 v4 h-32 Z" />
 </vector>
