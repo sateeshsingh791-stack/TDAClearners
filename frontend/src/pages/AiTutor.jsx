@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 export default function AiTutor() {
   const { user } = useAuth();
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Ask me anything about your syllabus — I\'ll explain it in context.' }
+    { role: 'assistant', text: 'Ask me anything about your B.Voc Textile Design & Apparel Technology syllabus — I\'ll explain it in context.' }
   ]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -24,13 +24,13 @@ export default function AiTutor() {
     setInput('');
     setBusy(true);
     try {
-      const res = await chatWithAiTutor({ message: question });
-      const reply = res.data.data?.reply || res.data.reply || res.data.message || 'No response received.';
+      const res = await chatWithAiTutor({ userMessage: question, message: question });
+      const reply = res.data.data?.chatTurn?.text || res.data.data?.reply || res.data.reply || res.data.message || 'No response received.';
       setMessages((m) => [...m, { role: 'assistant', text: reply }]);
     } catch (err) {
       setMessages((m) => [
         ...m,
-        { role: 'assistant', text: 'Something went wrong reaching the tutor. Try again in a moment.' }
+        { role: 'assistant', text: 'Something went wrong reaching the tutor backend proxy. Please try again.' }
       ]);
     } finally {
       setBusy(false);
@@ -52,14 +52,14 @@ export default function AiTutor() {
   return (
     <div className="max-w-2xl flex flex-col h-[calc(100vh-160px)]">
       <p className="font-mono text-xs text-clay uppercase tracking-widest mb-2">06 — AI Tutor</p>
-      <h1 className="font-display text-3xl mb-4">Ask the tutor</h1>
+      <h1 className="font-display text-3xl mb-4">Ask the AI Tutor</h1>
 
       <div className="flex-1 overflow-y-auto space-y-3 border border-ink/10 rounded-xl bg-white/30 p-4 mb-4">
         {messages.map((m, i) => (
           <div
             key={i}
-            className={`max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed ${
-              m.role === 'user' ? 'ml-auto bg-moss text-paper' : 'bg-white/70 text-ink'
+            className={`max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+              m.role === 'user' ? 'ml-auto bg-moss text-paper' : 'bg-white/90 text-ink border border-ink/5 shadow-sm'
             }`}
           >
             {m.text}
@@ -73,7 +73,7 @@ export default function AiTutor() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your question…"
+          placeholder="Type your question (e.g., Explain French Seam vs Plain Seam)…"
           className="flex-1 border border-ink/15 rounded-full px-4 py-2.5 text-sm focus-ring bg-white"
         />
         <button

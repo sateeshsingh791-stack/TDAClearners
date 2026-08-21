@@ -1,19 +1,20 @@
-
+import { GoogleGenAI } from '@google/genai';
 
 const SYSTEM_INSTRUCTIONS = {
   ACADEMIC_PROFESSOR: `
     You are a Senior Academic Professor of B.Voc Textile Design & Apparel Technology at Khalsa College, Amritsar (affiliated with Guru Nanak Dev University, NEP framework).
     You teach Semester I and Semester II subjects:
-    - BVTD 111: Introduction to Textile Science
-    - BVTD 112: Fibre Identification Practical
-    - BVTD 113: Sewing Techniques & Garment Construction
-    - BVTD 114: Surface Ornamentation
+    - BVTD 111: Design Foundation & Basics of Textile
+    - BVTD 112: Design Foundation & Basics of Textile (Practical)
+    - BVTD 113: Sewing Techniques (Practical)
+    - BVTD 114: Introduction to Enterprenurship
+    - CS-BVTD111: Computer Application-I
+    - BCSV-1129: Communication Skills in English-I
     - BVTD 121: Introduction to Fashion
-    - BVTD 122: Fashion Illustration & CAD
-    - BVTD 123: Design Foundation II & Woven Fabric Analysis
-    - CS-BVTD111/121: Communication Skills in English
-    - BHPB 1101/1201: Punjabi Heritage & Folk Culture
-    - ZDA111/121: Drug Abuse Prevention
+    - BVTD 122: Garment sewing (practical)
+    - BVTD 123: Design foundation and basics of textiles - II (Practical)
+    - BVTD 124: Enterprise Planning
+    - CS-BVTD121: Computer Applications-II (Practical)
     Always provide structured, academically rigorous explanations suitable for university exams, with headings, bullet points, and practical examples.
   `.trim(),
   INDUSTRY_EXPERT: `
@@ -33,30 +34,35 @@ const SYSTEM_INSTRUCTIONS = {
 
 /**
  * AI Chat Proxy Endpoint
- * Securely proxies client requests to Google Gemini REST API without exposing API keys.
+ * Securely proxies client requests to Google Gemini API using process.env.GEMINI_API_KEY without exposing keys.
  */
 export const chatProxy = async (req, res, next) => {
   try {
-    const { history = [], userMessage, modelId = 'gemini-3.5-flash', roleKey = 'ACADEMIC_PROFESSOR', enableSearchGrounding = false } = req.body;
+    const {
+      history = [],
+      userMessage,
+      message,
+      modelId = 'gemini-2.5-flash',
+      roleKey = 'ACADEMIC_PROFESSOR',
+      enableSearchGrounding = false
+    } = req.body;
 
-    if (!userMessage) {
+    const promptText = userMessage || message;
+
+    if (!promptText) {
       return res.status(400).json({
         success: false,
-        error: { message: 'userMessage is required.' }
+        error: { message: 'userMessage or message field is required.' }
       });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-
-    // Determine system instruction text
     const systemInstructionText = SYSTEM_INSTRUCTIONS[roleKey] || SYSTEM_INSTRUCTIONS.ACADEMIC_PROFESSOR;
+    const effectiveModel = modelId || 'gemini-2.5-flash';
 
-    // Effective model selection
-    const effectiveModel = enableSearchGrounding ? 'gemini-3.5-flash' : modelId;
-
-    // Check if key is available
-    if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-      const fallbackText = generateFallbackResponse(userMessage, roleKey, effectiveModel);
+    // If key is missing or default placeholder, use offline fallback response
+    if (!apiKey || apiKey.trim() === '' || apiKey === 'your_gemini_api_key_here') {
+      const fallbackText = generateFallbackResponse(promptText, roleKey, effectiveModel);
       return res.status(200).json({
         success: true,
         data: {
@@ -65,7 +71,7 @@ export const chatProxy = async (req, res, next) => {
             role: 'model',
             text: fallbackText,
             modelUsed: effectiveModel,
-            isSearchGrounded: enableSearchGrounding,
+            isSearchGrounded: false,
             searchQueries: [],
             groundingSources: []
           }
@@ -73,124 +79,74 @@ export const chatProxy = async (req, res, next) => {
       });
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent?key=${apiKey}`;
+    try {
+      const ai = new GoogleGenAI({ apiKey });
 
-    // Construct contents array
-    const contentsArray = [];
-
-    // Add recent history turns (up to 10)
-    history.slice(-10).forEach((turn) => {
-      contentsArray.push({
-        role: turn.role === 'user' ? 'user' : 'model',
-        parts: [{ text: turn.text }]
-      });
-    });
-
-    // Add new user prompt
-    contentsArray.push({
-      role: 'user',
-      parts: [{ text: userMessage }]
-    });
-
-    // Construct payload
-    const payload = {
-      contents: contentsArray,
-      systemInstruction: {
-        parts: [{ text: systemInstructionText }]
-      }
-    };
-
-    if (enableSearchGrounding) {
-      payload.tools = [{ googleSearch: {} }];
-    }
-
-    const geminiRes = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const responseBody = await geminiRes.json();
-
-    if (!geminiRes.ok) {
-      console.warn('[Gemini API Warning] Upstream API call failed, generating fallback response:', responseBody);
-      const fallbackText = generateFallbackResponse(userMessage, roleKey, effectiveModel);
-      return res.status(200).json({
-        success: true,
-        data: {
-          chatTurn: {
-            id: String(Date.now()),
-            role: 'model',
-            text: fallbackText,
-            modelUsed: effectiveModel,
-            isSearchGrounded: enableSearchGrounding,
-            searchQueries: [],
-            groundingSources: []
-          }
-        }
-      });
-    }
-
-    const candidate = responseBody.candidates?.[0];
-    const parts = candidate?.content?.parts || [];
-    const responseText = parts.map((p) => p.text).join('') || 'No textual response returned by model.';
-
-    // Extract search grounding metadata
-    const searchQueries = [];
-    const groundingSources = [];
-    let isGrounded = false;
-
-    const groundingMetadata = candidate?.groundingMetadata;
-    if (groundingMetadata) {
-      if (Array.isArray(groundingMetadata.webSearchQueries)) {
-        groundingMetadata.webSearchQueries.forEach((q) => searchQueries.push(q));
-      }
-      if (Array.isArray(groundingMetadata.groundingChunks)) {
-        groundingMetadata.groundingChunks.forEach((chunk) => {
-          if (chunk.web?.uri) {
-            groundingSources.push({
-              title: chunk.web.title || 'Web Source',
-              uri: chunk.web.uri
-            });
-          }
+      // Construct history contents array
+      const contentsArray = [];
+      history.slice(-10).forEach((turn) => {
+        contentsArray.push({
+          role: turn.role === 'user' ? 'user' : 'model',
+          parts: [{ text: turn.text || turn.content || '' }]
         });
-      }
-      if (searchQueries.length > 0 || groundingSources.length > 0) {
-        isGrounded = true;
-      }
-    }
+      });
 
-    res.status(200).json({
-      success: true,
-      data: {
-        chatTurn: {
-          id: String(Date.now()),
-          role: 'model',
-          text: responseText,
-          modelUsed: effectiveModel,
-          isSearchGrounded: isGrounded || enableSearchGrounding,
-          searchQueries,
-          groundingSources
-        }
+      contentsArray.push({
+        role: 'user',
+        parts: [{ text: promptText }]
+      });
+
+      const config = {
+        systemInstruction: systemInstructionText
+      };
+
+      if (enableSearchGrounding) {
+        config.tools = [{ googleSearch: {} }];
       }
-    });
+
+      const response = await ai.models.generateContent({
+        model: effectiveModel,
+        contents: contentsArray,
+        config
+      });
+
+      const responseText = response.text || 'No textual response returned by Gemini.';
+
+      res.status(200).json({
+        success: true,
+        data: {
+          chatTurn: {
+            id: String(Date.now()),
+            role: 'model',
+            text: responseText,
+            modelUsed: effectiveModel,
+            isSearchGrounded: enableSearchGrounding,
+            searchQueries: [],
+            groundingSources: []
+          }
+        }
+      });
+    } catch (sdkError) {
+      console.warn('[Gemini SDK Warning] SDK call failed, using fallback:', sdkError.message);
+      const fallbackText = generateFallbackResponse(promptText, roleKey, effectiveModel);
+      res.status(200).json({
+        success: true,
+        data: {
+          chatTurn: {
+            id: String(Date.now()),
+            role: 'model',
+            text: fallbackText,
+            modelUsed: effectiveModel,
+            isSearchGrounded: false,
+            searchQueries: [],
+            groundingSources: []
+          }
+        }
+      });
+    }
   } catch (error) {
     console.error('[AI Chat Error]', error);
-    const fallbackText = generateFallbackResponse(req.body?.userMessage || '', 'ACADEMIC_PROFESSOR', 'gemini-3.5-flash');
-    res.status(200).json({
-      success: true,
-      data: {
-        chatTurn: {
-          id: String(Date.now()),
-          role: 'model',
-          text: fallbackText,
-          modelUsed: 'gemini-3.5-flash',
-          isSearchGrounded: false,
-          searchQueries: [],
-          groundingSources: []
-        }
-      }
-    });
+    next(error);
   }
 };
 
@@ -199,14 +155,14 @@ export const chatProxy = async (req, res, next) => {
  */
 function generateFallbackResponse(query, roleKey, modelId) {
   const q = query.toLowerCase();
-  if (q.includes('burn') || q.includes('silk') || q.includes('polyester') || q.includes('cotton')) {
-    return `### 🔬 Textile Identification & Burning Test Analysis\n\nAccording to **BVTD 112 (Fibre Identification Practical)** syllabus:\n\n1. **Cotton (Cellulosic Fibre)**:\n   - *Approaching Flame*: Does not shrink.\n   - *In Flame*: Burns rapidly with yellow flame.\n   - *Odor*: Burning paper odor.\n   - *Residue*: Light, feathery gray ash.\n\n2. **Silk / Wool (Protein Fibre)**:\n   - *In Flame*: Burns slowly, self-extinguishing.\n   - *Odor*: Burning hair/feathers.\n   - *Residue*: Dark, crushable irregular black bead.\n\n3. **Polyester / Nylon (Synthetic Thermoplastic)**:\n   - *Approaching Flame*: Melts and curls away from flame.\n   - *Odor*: Sweet chemical/aromatic odor.\n   - *Residue*: Hard, black, uncrushable round bead.`;
+  if (q.includes('sewing') || q.includes('seam') || q.includes('french') || q.includes('stitching')) {
+    return `### 🧵 Sewing Techniques & Seam Engineering\n\nAccording to **BVTD 113 (Sewing Techniques Practical)** syllabus:\n\n1. **Plain Seam**: Standard structural join formed right sides together at 1.5cm seam allowance.\n2. **French Seam**: Self-enclosed double stitch seam encasing raw edges inside a second fold; ideal for delicate and sheer fabrics.\n3. **Run & Fell Seam**: Double topstitched structural seam providing high strength for heavy cottons and denim.\n4. **Fullness Control**: Darts converge at the bust apex; pleats fold crisp lines; gathers distribute volume evenly.`;
   }
-  if (q.includes('fashion cycle') || q.includes('stages') || q.includes('trend')) {
-    return `### 👗 The 5 Stages of the Fashion Life Cycle\n\nAccording to **BVTD 121 (Introduction to Fashion)** curriculum:\n\n1. **Introduction**: Avant-garde designs introduced on runway/couture in limited quantities at highest price point.\n2. **Rise**: Accepted by fashion leaders & influencers; mass manufacturers copy/adapt the style.\n3. **Culmination (Peak)**: Maximum popularity and mass production; widely available at affordable retail prices.\n4. **Decline**: Market saturation occurs; consumers tire of the style; price discounts begin.\n5. **Obsolescence**: Style is deemed out of fashion and replaced by a fresh aesthetic cycle.`;
+  if (q.includes('entrepreneurship') || q.includes('business') || q.includes('dpr') || q.includes('msme')) {
+    return `### 💼 Entrepreneurship Fundamentals\n\nAccording to **BVTD 114 (Introduction to Enterprenurship)** curriculum:\n\n1. **Concept**: Entrepreneurship is the process of discovering opportunities, assembling resources, and assuming financial risk to launch a venture.\n2. **Characteristics**: High need for achievement, vision, perseverance, risk tolerance, and innovative drive.\n3. **Institutional Support**: District Industries Centres (DIC) and MSME policies provide single-window clearances, technology upgrades (TUFS), and financial subsidies.\n4. **Detailed Project Report (DPR)**: Comprehensive documentation of technical, financial, and market feasibility required for bank loans.`;
   }
-  if (q.includes('weave') || q.includes('twill') || q.includes('plain') || q.includes('satin')) {
-    return `### 🧵 Fabric Weave Structure Comparison\n\nReferencing **BVTD 123 (Design Foundation II & Woven Fabric Analysis)**:\n\n- **Plain Weave (1/1)**: Simplest 1-up / 1-down interlacement. Maximizes yarn intersections per square inch. Produces durable, reversible fabrics like Calico, Poplin, and Chiffon.\n- **Twill Weave (2/1, 2/2, 3/1)**: Characterized by prominent diagonal wale lines at 45° angle. Higher drape and crease resistance (Denim, Gabardine, Drill).\n- **Satin Weave (4/1)**: Long floating warp or weft yarns yielding high lustrous sheen and silky hand feel.`;
+  if (q.includes('fashion') || q.includes('cycle') || q.includes('trend')) {
+    return `### 👗 The 5 Stages of the Fashion Life Cycle\n\nAccording to **BVTD 121 (Introduction to Fashion)** syllabus:\n\n1. **Introduction**: Avant-garde designs introduced at high price points in limited quantities.\n2. **Rise**: Accepted by trend leaders; mass manufacturers begin adapting the style.\n3. **Culmination (Peak)**: Mass production and peak popularity across accessible retail channels.\n4. **Decline**: Market saturation occurs; markdowns begin.\n5. **Obsolescence**: Style is discarded and replaced by a fresh fashion cycle.`;
   }
-  return `### 🎓 Academic Response\n\nBased on the **Khalsa College B.Voc Textile Design & Apparel Technology** scheme:\n\nYour query regarding "${query}" connects directly to core curriculum competencies.\n\n- **Theoretical Foundation**: Examine raw material characteristics, yarn counts, and molecular polymer arrangements.\n- **Practical Laboratory Application**: Perform standard testing protocols under proper safety parameters.\n- **Industrial Alignment**: Ensure production speed, quality compliance (AQL 2.5), and market readiness.\n\n*(Processed via ${modelId})*`;
+  return `### 🎓 Academic Response\n\nBased on the **Khalsa College B.Voc Textile Design & Apparel Technology** scheme:\n\nYour query regarding "${query}" connects directly to core curriculum competencies.\n\n- **Theoretical Foundation**: Review subject concepts, yarn parameters, and design principles.\n- **Practical Application**: Follow step-by-step laboratory procedures.\n- **Industry Alignment**: Ensure production efficiency, quality standards, and market readiness.\n\n*(Processed via ${modelId})*`;
 }
