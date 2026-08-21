@@ -60,7 +60,27 @@ export default function TopicLearning() {
       </NavLink>
 
       <div className="flex items-start justify-between gap-4 mt-4 mb-6">
-        <h1 className="font-display text-3xl">{topic.title || topic.name}</h1>
+        <div>
+          <h1 className="font-display text-3xl">{topic.title || topic.name}</h1>
+          <div className="mt-2">
+            <NavLink
+              to="/ai-tutor"
+              state={{
+                academicContext: {
+                  course: 'B.Voc. Textile Design & Apparel Technology',
+                  yearNumber: Math.ceil((topic.semesterNumber || 1) / 2),
+                  semesterNumber: topic.semesterNumber || 1,
+                  subjectCode: topic.subjectCode,
+                  unitTitle: topic.unitTitle,
+                  topicTitle: topic.title || topic.name
+                }
+              }}
+              className="text-xs font-mono font-medium rounded-full px-3 py-1.5 border border-moss/30 bg-moss/10 text-moss hover:bg-moss hover:text-paper transition-all focus-ring inline-flex items-center gap-1.5"
+            >
+              🤖 Ask AI Tutor about this topic →
+            </NavLink>
+          </div>
+        </div>
         <div className="flex gap-2 shrink-0">
           <button
             onClick={markBookmark}

@@ -29,8 +29,27 @@ export default function SubjectDetail() {
         ← Back to syllabus
       </NavLink>
       <p className="font-mono text-xs text-clay uppercase tracking-widest mt-4 mb-1">{code}</p>
-      <h1 className="font-display text-3xl mb-2">{subject.name || subject.title}</h1>
-      {subject.description && <p className="text-slate max-w-2xl mb-8">{subject.description}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="font-display text-3xl">{subject.name || subject.title}</h1>
+          {subject.overview && <p className="text-slate text-sm max-w-2xl mt-1">{subject.overview}</p>}
+        </div>
+        <NavLink
+          to="/ai-tutor"
+          state={{
+            academicContext: {
+              course: 'B.Voc. Textile Design & Apparel Technology',
+              yearNumber: subject.yearNumber || 1,
+              semesterNumber: subject.semesterNumber || 1,
+              subjectCode: subject.code,
+              subjectName: subject.name
+            }
+          }}
+          className="text-xs font-mono font-medium rounded-full px-3.5 py-2 border border-moss/30 bg-moss/10 text-moss hover:bg-moss hover:text-paper transition-all focus-ring shrink-0 inline-flex items-center gap-1.5"
+        >
+          🤖 Ask AI Tutor about {subject.code} →
+        </NavLink>
+      </div>
 
       <h2 className="font-display text-xl mb-3">Topics</h2>
       {topics.length === 0 ? (
