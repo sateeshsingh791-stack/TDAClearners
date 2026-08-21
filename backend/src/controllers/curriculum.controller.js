@@ -5,6 +5,7 @@ import { Practical } from '../models/Practical.js';
 import { CareerRole } from '../models/CareerRole.js';
 import { Resource } from '../models/Resource.js';
 import {
+  INITIAL_ACADEMIC_SCHEME,
   INITIAL_SUBJECTS,
   INITIAL_TOPICS,
   INITIAL_PRACTICALS,
@@ -15,7 +16,7 @@ import {
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 /**
- * Get all subjects categorized by semester/year.
+ * Get all subjects categorized by semester/year with academic availability scheme.
  */
 export const getSemesters = async (req, res, next) => {
   try {
@@ -36,24 +37,36 @@ export const getSemesters = async (req, res, next) => {
     const semesters = semesterNumbers.map((num) => {
       const semSubjects = subjects.filter((s) => s.semesterNumber === num);
       const yearNum = Math.ceil(num / 2);
-      const totalCredits = semSubjects.reduce((acc, s) => acc + (s.totalCredits || 0), 0);
-      const totalMarks = semSubjects.reduce((acc, s) => acc + (s.totalMarks || 0), 0);
-      const totalHours = semSubjects.reduce((acc, s) => acc + (s.hoursPerWeek || 0), 0);
+      const isAvailable = num === 1 || num === 2;
+      
+      const totalCredits = isAvailable 
+        ? semSubjects.reduce((acc, s) => acc + (s.totalCredits || 0), 0)
+        : 0;
+      const totalMarks = isAvailable 
+        ? semSubjects.reduce((acc, s) => acc + (s.totalMarks || 0), 0)
+        : 0;
+      const totalHours = isAvailable 
+        ? semSubjects.reduce((acc, s) => acc + (s.hoursPerWeek || 0), 0)
+        : 0;
 
       return {
         number: num,
-        title: `Semester ${num} (${num % 2 === 1 ? 'Autumn / Odd' : 'Spring / Even'} Term)`,
+        title: `Semester ${num}`,
+        status: isAvailable ? 'AVAILABLE' : 'COMING_SOON',
         yearNumber: yearNum,
         totalCredits,
         totalMarks,
         totalHoursPerWeek: totalHours,
-        subjects: semSubjects
+        subjects: isAvailable ? semSubjects : []
       };
     });
 
     res.status(200).json({
       success: true,
-      data: { semesters }
+      data: {
+        academicScheme: INITIAL_ACADEMIC_SCHEME,
+        semesters
+      }
     });
   } catch (error) {
     next(error);
@@ -147,7 +160,7 @@ export const getTopicById = async (req, res, next) => {
     if (!topic) {
       return res.status(404).json({
         success: false,
-        error: { message: `Topic ${req.params.topicId} not found.` }
+        error: { message: `Topic ${req.params.topicId} not found in available syllabus.` }
       });
     }
 
