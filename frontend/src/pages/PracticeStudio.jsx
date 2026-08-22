@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getSemesters, getScopedQuizzes, getScopedFlashcards, recordQuizAttempt, updateFlashcardMastery } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -9,61 +9,132 @@ export default function PracticeStudio() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Scope selection state
+  // Scope selection state from URL or defaults
   const [selectedSemester, setSelectedSemester] = useState(searchParams.get('semester') || 'ALL');
   const [selectedSubject, setSelectedSubject] = useState(searchParams.get('subjectCode') || 'ALL');
   const [selectedUnit, setSelectedUnit] = useState(searchParams.get('unitNumber') || 'ALL');
   const [selectedTopic, setSelectedTopic] = useState(searchParams.get('topicId') || 'ALL');
-  const [activityMode, setActivityMode] = useState(searchParams.get('activity') || 'QUIZ'); // QUIZ | FLASHCARDS | REVISION | PRACTICE_QUESTIONS
+  const [activityMode, setActivityMode] = useState(searchParams.get('activity') || 'QUIZ'); // QUIZ | FLASHCARDS | REVISION | PRACTICE_QUESTIONS | EXAM_PREP
 
-  // Data state
+  // Curriculum tree loaded from API
   const [semesters, setSemesters] = useState([]);
-  const [allSubjects, setAllSubjects] = useState([]);
-  const [allTopics, setAllTopics] = useState([]);
+  const [loadingCurriculum, setLoadingCurriculum] = useState(true);
+  const [curriculumError, setCurriculumError] = useState('');
 
   // Activity content state
-  const [quizzes, setQuizzes] = useState([]);
-  const [flashcards, setFlashcards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [apiQuizzes, setApiQuizzes] = useState([]);
+  const [apiFlashcards, setApiFlashcards] = useState([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+  const [activityError, setActivityError] = useState('');
 
-  // Quiz state
-  const [quizIndex, setQuizIndex] = useState(0);
+  // Quiz execution state
   const [userAnswers, setUserAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
 
-  // Flashcard state
+  // Flashcard execution state
   const [cardIndex, setCardIndex] = useState(0);
   const [cardFlipped, setCardFlipped] = useState(false);
 
-  // Load initial curriculum data
+  // 1. Fetch initial curriculum structure (semesters -> subjects -> units -> topics)
   useEffect(() => {
+    setLoadingCurriculum(true);
     getSemesters()
       .then((res) => {
         const semList = res.data.data?.semesters || res.data.semesters || (Array.isArray(res.data.data) ? res.data.data : []);
         setSemesters(semList);
-
-        const subList = [];
-        const topList = [];
-        semList.forEach((sem) => {
-          (sem.subjects || []).forEach((sub) => {
-            subList.push({ ...sub, semesterNumber: sem.number || sem.semesterNumber });
-            (sub.units || []).forEach((u) => {
-              (u.topics || []).forEach((t) => {
-                topList.push({ ...t, subjectCode: sub.code, unitNumber: u.unitNumber });
-              });
-            });
-          });
-        });
-        setAllSubjects(subList);
-        setAllTopics(topList);
       })
-      .catch(() => setError('Could not load curriculum scheme.'))
-      .finally(() => setLoading(false));
+      .catch(() => setCurriculumError('Could not load academic curriculum structure.'))
+      .finally(() => setLoadingCurriculum(false));
   }, []);
 
-  // Update query params when scope changes
+  // 2. Derive available subjects based on selectedSemester
+  const availableSubjects = useMemo(() => {
+    const list = [];
+    semesters.forEach((sem) => {
+      if (sem.status === 'AVAILABLE' || sem.number === 1 || sem.number === 2) {
+        if (selectedSemester === 'ALL' || String(sem.number) === String(selectedSemester)) {
+          (sem.subjects || []).forEach((sub) => {
+            list.push({ ...sub, semesterNumber: sem.number });
+          });
+        }
+      }
+    });
+    return list;
+  }, [semesters, selectedSemester]);
+
+  // 3. Find selected subject object
+  const selectedSubjectObj = useMemo(() => {
+    if (selectedSubject === 'ALL') return null;
+    return availableSubjects.find((s) => s.code.toUpperCase() === selectedSubject.toUpperCase()) || null;
+  }, [availableSubjects, selectedSubject]);
+
+  // 4. Derive available units for selectedSubjectObj (reads syllabus unit names dynamically)
+  const availableUnits = useMemo(() => {
+    if (!selectedSubjectObj || !selectedSubjectObj.units) return [];
+    return selectedSubjectObj.units;
+  }, [selectedSubjectObj]);
+
+  // 5. Find selected unit object
+  const selectedUnitObj = useMemo(() => {
+    if (selectedUnit === 'ALL' || !availableUnits.length) return null;
+    return availableUnits.find((u) => String(u.unitNumber) === String(selectedUnit)) || null;
+  }, [availableUnits, selectedUnit]);
+
+  // 6. Derive available topics based on selectedSubjectObj and selectedUnitObj
+  const availableTopics = useMemo(() => {
+    if (!selectedSubjectObj) {
+      // If no subject selected, return all available topics across active subjects
+      const allT = [];
+      availableSubjects.forEach((sub) => {
+        (sub.units || []).forEach((u) => {
+          (u.topics || []).forEach((t) => {
+            allT.push({ ...t, subjectCode: sub.code, subjectName: sub.name, unitNumber: u.unitNumber, unitTitle: u.title });
+          });
+        });
+      });
+      return allT;
+    }
+
+    if (selectedUnitObj) {
+      return (selectedUnitObj.topics || []).map((t) => ({
+        ...t,
+        subjectCode: selectedSubjectObj.code,
+        subjectName: selectedSubjectObj.name,
+        unitNumber: selectedUnitObj.unitNumber,
+        unitTitle: selectedUnitObj.title
+      }));
+    }
+
+    // If subject is selected but Unit is ALL, return all topics from all units of selectedSubjectObj
+    const allT = [];
+    (selectedSubjectObj.units || []).forEach((u) => {
+      (u.topics || []).forEach((t) => {
+        allT.push({
+          ...t,
+          subjectCode: selectedSubjectObj.code,
+          subjectName: selectedSubjectObj.name,
+          unitNumber: u.unitNumber,
+          unitTitle: u.title
+        });
+      });
+    });
+    return allT;
+  }, [availableSubjects, selectedSubjectObj, selectedUnitObj]);
+
+  // 7. Find selected topic object
+  const selectedTopicObj = useMemo(() => {
+    if (selectedTopic === 'ALL' || !availableTopics.length) return null;
+    return availableTopics.find((t) => String(t.topicId) === String(selectedTopic)) || null;
+  }, [availableTopics, selectedTopic]);
+
+  // 8. Scope-filtered topics (Level 1: Subject, Level 2: Subject+Unit, Level 3: Subject+Unit+Topic)
+  const scopedTopics = useMemo(() => {
+    if (selectedTopicObj) return [selectedTopicObj];
+    return availableTopics;
+  }, [selectedTopicObj, availableTopics]);
+
+  // 9. Sync state changes to URL search params
   useEffect(() => {
     const params = {};
     if (selectedSemester !== 'ALL') params.semester = selectedSemester;
@@ -74,12 +145,49 @@ export default function PracticeStudio() {
     setSearchParams(params, { replace: true });
   }, [selectedSemester, selectedSubject, selectedUnit, selectedTopic, activityMode]);
 
-  // Fetch scoped activity content
+  // 10. Cascading Selection Reset Handlers
+  const handleSemesterChange = (newSem) => {
+    setSelectedSemester(newSem);
+
+    // Compute newly available subjects
+    const newAvailSubjects = [];
+    semesters.forEach((sem) => {
+      if (sem.status === 'AVAILABLE' || sem.number === 1 || sem.number === 2) {
+        if (newSem === 'ALL' || String(sem.number) === String(newSem)) {
+          (sem.subjects || []).forEach((sub) => newAvailSubjects.push(sub));
+        }
+      }
+    });
+
+    const isSubjectValid = newAvailSubjects.some((s) => s.code.toUpperCase() === selectedSubject.toUpperCase());
+    if (!isSubjectValid) {
+      setSelectedSubject('ALL');
+      setSelectedUnit('ALL');
+      setSelectedTopic('ALL');
+    }
+  };
+
+  const handleSubjectChange = (newSubj) => {
+    setSelectedSubject(newSubj);
+    setSelectedUnit('ALL');
+    setSelectedTopic('ALL');
+  };
+
+  const handleUnitChange = (newUnit) => {
+    setSelectedUnit(newUnit);
+    setSelectedTopic('ALL');
+  };
+
+  const handleTopicChange = (newTopic) => {
+    setSelectedTopic(newTopic);
+  };
+
+  // 11. Fetch activity content from API when scope or mode changes
   useEffect(() => {
-    setLoading(true);
-    setError('');
+    if (loadingCurriculum) return;
+    setLoadingActivity(true);
+    setActivityError('');
     setQuizSubmitted(false);
-    setQuizIndex(0);
     setUserAnswers({});
     setCardIndex(0);
     setCardFlipped(false);
@@ -93,52 +201,125 @@ export default function PracticeStudio() {
       getScopedQuizzes(queryParams)
         .then((res) => {
           const list = res.data.data?.questions || res.data.data?.quizzes || res.data.quizzes || (Array.isArray(res.data.data) ? res.data.data : []);
-          setQuizzes(list);
+          setApiQuizzes(list);
         })
-        .catch(() => setError('Could not load scoped quizzes.'))
-        .finally(() => setLoading(false));
+        .catch(() => setActivityError('Could not fetch quiz questions.'))
+        .finally(() => setLoadingActivity(false));
     } else if (activityMode === 'FLASHCARDS') {
       getScopedFlashcards(queryParams)
         .then((res) => {
           const list = res.data.data?.flashcards || res.data.flashcards || (Array.isArray(res.data.data) ? res.data.data : []);
-          setFlashcards(list);
+          setApiFlashcards(list);
         })
-        .catch(() => setError('Could not load scoped flashcards.'))
-        .finally(() => setLoading(false));
+        .catch(() => setActivityError('Could not fetch flashcards.'))
+        .finally(() => setLoadingActivity(false));
     } else {
-      setLoading(false);
+      setLoadingActivity(false);
     }
-  }, [selectedSubject, selectedUnit, selectedTopic, activityMode]);
+  }, [selectedSubject, selectedUnit, selectedTopic, activityMode, loadingCurriculum]);
 
-  // Filter subjects by selected semester
-  const availableSubjects = selectedSemester === 'ALL'
-    ? allSubjects
-    : allSubjects.filter((s) => String(s.semesterNumber) === String(selectedSemester));
+  // 12. Dynamic Scope-Grounded Quiz Questions Fallback Generator
+  const activeQuizQuestions = useMemo(() => {
+    if (apiQuizzes && apiQuizzes.length > 0) {
+      return apiQuizzes;
+    }
 
-  // Filter topics by selected subject & unit
-  const filteredTopics = allTopics.filter((t) => {
-    if (selectedSubject !== 'ALL' && t.subjectCode !== selectedSubject) return false;
-    if (selectedUnit !== 'ALL' && String(t.unitNumber) !== String(selectedUnit)) return false;
-    return true;
-  });
+    // Generate fallback MCQs from scopedTopics if API has 0 pre-stored questions
+    const generated = [];
+    scopedTopics.forEach((t, i) => {
+      if (t.importantTerms && Object.keys(t.importantTerms).length > 0) {
+        Object.entries(t.importantTerms).forEach(([term, def], termIdx) => {
+          generated.push({
+            questionId: `gen_q_${t.topicId}_${termIdx}`,
+            subjectCode: t.subjectCode || selectedSubject,
+            unitNumber: t.unitNumber || selectedUnit,
+            topicId: t.topicId,
+            question: `In ${t.subjectCode} (${t.title}), what is defined as: "${def}"?`,
+            options: [
+              term,
+              `Secondary ${term} Process`,
+              `Auxiliary ${term} Standard`,
+              `Non-standard ${term} Allowance`
+            ].sort(() => 0.5 - Math.random()),
+            correctAnswer: term,
+            explanation: `${term} is defined as: "${def}" under ${t.title} (${t.subjectCode}).`,
+            difficulty: 'MEDIUM'
+          });
+        });
+      }
+
+      if (t.keyPoints && t.keyPoints.length > 0) {
+        t.keyPoints.slice(0, 2).forEach((kp, kpIdx) => {
+          generated.push({
+            questionId: `gen_kp_${t.topicId}_${kpIdx}`,
+            subjectCode: t.subjectCode || selectedSubject,
+            unitNumber: t.unitNumber || selectedUnit,
+            topicId: t.topicId,
+            question: `Which statement accurately describes ${t.title}?`,
+            options: [
+              kp,
+              `Incorrect assertion regarding ${t.title} workflow.`,
+              `Unrelated parameter not applicable to ${t.subjectCode}.`,
+              `Obsolete textile specification replaced in GNDU NEP scheme.`
+            ].sort(() => 0.5 - Math.random()),
+            correctAnswer: kp,
+            explanation: `According to official syllabus notes: ${kp}`,
+            difficulty: 'EASY'
+          });
+        });
+      }
+    });
+
+    return generated;
+  }, [apiQuizzes, scopedTopics, selectedSubject, selectedUnit]);
+
+  // 13. Dynamic Scope-Grounded Flashcards Fallback Generator
+  const activeFlashcards = useMemo(() => {
+    if (apiFlashcards && apiFlashcards.length > 0) {
+      return apiFlashcards;
+    }
+
+    const generated = [];
+    scopedTopics.forEach((t) => {
+      if (t.importantTerms) {
+        Object.entries(t.importantTerms).forEach(([term, def], idx) => {
+          generated.push({
+            cardId: `gen_fc_${t.topicId}_${idx}`,
+            subjectCode: t.subjectCode || selectedSubject,
+            unitNumber: t.unitNumber || selectedUnit,
+            topicId: t.topicId,
+            type: 'DEFINITION',
+            front: `What is ${term} in ${t.subjectCode}?`,
+            back: `${def}`,
+            categoryHint: `${t.subjectCode} • Unit ${t.unitNumber || 1}`
+          });
+        });
+      }
+    });
+
+    return generated;
+  }, [apiFlashcards, scopedTopics, selectedSubject, selectedUnit]);
 
   const handleQuizSubmit = async () => {
     let score = 0;
-    quizzes.forEach((q, i) => {
+    activeQuizQuestions.forEach((q, i) => {
       const picked = userAnswers[i];
-      if (picked !== undefined && (picked === q.correctIndex || picked === q.correctAnswer || picked === q.answer)) {
-        score += 1;
+      if (picked !== undefined) {
+        const pickedVal = typeof picked === 'number' ? q.options[picked] : picked;
+        if (pickedVal === q.correctAnswer || picked === q.correctIndex || picked === q.answer) {
+          score += 1;
+        }
       }
     });
     setQuizScore(score);
     setQuizSubmitted(true);
 
-    if (user && quizzes[0]) {
+    if (user && activeQuizQuestions[0]) {
       try {
         await recordQuizAttempt({
-          quizId: quizzes[0]._id || quizzes[0].id || String(Date.now()),
+          quizId: activeQuizQuestions[0].questionId || String(Date.now()),
           score,
-          total: quizzes.length
+          total: activeQuizQuestions.length
         });
       } catch (e) {
         /* non-blocking */
@@ -147,7 +328,7 @@ export default function PracticeStudio() {
   };
 
   const handleCardMastery = async (masteryLevel) => {
-    const card = flashcards[cardIndex];
+    const card = activeFlashcards[cardIndex];
     if (user && card) {
       try {
         await updateFlashcardMastery({ flashcardId: card.cardId || card._id, mastery: masteryLevel });
@@ -156,27 +337,35 @@ export default function PracticeStudio() {
       }
     }
     setCardFlipped(false);
-    if (cardIndex < flashcards.length - 1) {
+    if (cardIndex < activeFlashcards.length - 1) {
       setCardIndex((idx) => idx + 1);
     }
   };
 
+  const shuffleCards = () => {
+    setCardFlipped(false);
+    setCardIndex(0);
+  };
+
+  if (loadingCurriculum) return <Loading />;
+  if (curriculumError) return <ErrorBlock message={curriculumError} />;
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Page Header */}
       <div>
         <p className="font-mono text-xs text-clay uppercase tracking-widest mb-1">04 — Practice Studio</p>
         <h1 className="font-display text-3xl font-bold text-ink">Dynamic Academic Practice Studio</h1>
         <p className="text-slate text-sm">
-          Select your academic scope (Semester, Subject, Unit, Topic) and practice mode to generate targeted study items.
+          Filter study activities dynamically by <strong>Semester</strong>, <strong>Subject</strong>, <strong>Unit</strong>, or <strong>Topic</strong>.
         </p>
       </div>
 
-      {/* Scope Selector Control Panel */}
+      {/* Scope Selection Control Panel */}
       <div className="border border-ink/15 rounded-2xl bg-white p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-ink/10 pb-3">
-          <h2 className="font-mono text-xs font-semibold text-clay uppercase tracking-wider">
-            🎯 Scope Selection Controls
+          <h2 className="font-mono text-xs font-semibold text-clay uppercase tracking-wider flex items-center gap-1.5">
+            <span>🎯 Cascading Scope Controls</span>
           </h2>
           <button
             onClick={() => {
@@ -187,22 +376,19 @@ export default function PracticeStudio() {
             }}
             className="text-xs font-mono text-slate hover:text-ink underline"
           >
-            Reset All Filters
+            Reset Scope
           </button>
         </div>
 
+        {/* 4 Cascading Dropdowns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Semester Selector */}
+          
+          {/* 1. Semester Selector */}
           <div>
             <label className="block text-[11px] font-mono text-slate mb-1">Semester</label>
             <select
               value={selectedSemester}
-              onChange={(e) => {
-                setSelectedSemester(e.target.value);
-                setSelectedSubject('ALL');
-                setSelectedUnit('ALL');
-                setSelectedTopic('ALL');
-              }}
+              onChange={(e) => handleSemesterChange(e.target.value)}
               className="w-full border border-ink/15 rounded-xl px-3 py-2 text-xs font-medium bg-paper/50 focus-ring"
             >
               <option value="ALL">All Semesters (Sem 1 & 2)</option>
@@ -211,56 +397,56 @@ export default function PracticeStudio() {
             </select>
           </div>
 
-          {/* Subject Selector */}
+          {/* 2. Subject Selector */}
           <div>
             <label className="block text-[11px] font-mono text-slate mb-1">Subject</label>
             <select
               value={selectedSubject}
-              onChange={(e) => {
-                setSelectedSubject(e.target.value);
-                setSelectedUnit('ALL');
-                setSelectedTopic('ALL');
-              }}
-              className="w-full border border-ink/15 rounded-xl px-3 py-2 text-xs font-medium bg-paper/50 focus-ring"
+              onChange={(e) => handleSubjectChange(e.target.value)}
+              className="w-full border border-ink/15 rounded-xl px-3 py-2 text-xs font-medium bg-paper/50 focus-ring font-semibold text-moss"
             >
               <option value="ALL">All Subjects</option>
               {availableSubjects.map((s) => (
                 <option key={s.code} value={s.code}>
-                  {s.code} - {s.name}
+                  {s.code} — {s.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Unit Selector */}
+          {/* 3. Unit Selector (Reads Syllabus Unit Names Dynamically) */}
           <div>
             <label className="block text-[11px] font-mono text-slate mb-1">Unit / Section</label>
             <select
               value={selectedUnit}
-              onChange={(e) => {
-                setSelectedUnit(e.target.value);
-                setSelectedTopic('ALL');
-              }}
-              className="w-full border border-ink/15 rounded-xl px-3 py-2 text-xs font-medium bg-paper/50 focus-ring"
+              onChange={(e) => handleUnitChange(e.target.value)}
+              disabled={selectedSubject === 'ALL'}
+              className="w-full border border-ink/15 rounded-xl px-3 py-2 text-xs font-medium bg-paper/50 focus-ring disabled:opacity-50"
             >
-              <option value="ALL">All Units & Sections</option>
-              <option value="1">Unit 1 / Section-I</option>
-              <option value="2">Unit 2 / Section-II</option>
-              <option value="3">Unit 3</option>
-              <option value="4">Unit 4</option>
+              <option value="ALL">
+                {selectedSubject === 'ALL' ? 'All Units (Select Subject First)' : 'All Units in Subject'}
+              </option>
+              {availableUnits.map((u) => (
+                <option key={u.unitNumber} value={u.unitNumber}>
+                  {u.title || `Unit ${u.unitNumber}`}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Topic Selector */}
+          {/* 4. Topic Selector */}
           <div>
             <label className="block text-[11px] font-mono text-slate mb-1">Topic</label>
             <select
               value={selectedTopic}
-              onChange={(e) => setSelectedTopic(e.target.value)}
-              className="w-full border border-ink/15 rounded-xl px-3 py-2 text-xs font-medium bg-paper/50 focus-ring"
+              onChange={(e) => handleTopicChange(e.target.value)}
+              disabled={selectedSubject === 'ALL'}
+              className="w-full border border-ink/15 rounded-xl px-3 py-2 text-xs font-medium bg-paper/50 focus-ring disabled:opacity-50"
             >
-              <option value="ALL">All Topics in Scope</option>
-              {filteredTopics.map((t) => (
+              <option value="ALL">
+                {selectedSubject === 'ALL' ? 'All Topics (Select Subject First)' : 'All Topics in Scope'}
+              </option>
+              {availableTopics.map((t) => (
                 <option key={t.topicId} value={t.topicId}>
                   {t.title || t.name}
                 </option>
@@ -271,97 +457,80 @@ export default function PracticeStudio() {
 
         {/* Active Scope Summary Banner */}
         <div className="bg-paper/80 border border-ink/10 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between text-xs font-mono">
-          <div className="flex items-center gap-2">
-            <span className="text-moss font-semibold">Current Scope:</span>
-            <span className="bg-moss/10 text-moss px-2 py-0.5 rounded font-bold">
-              {selectedSubject !== 'ALL' ? selectedSubject : 'All Subjects'}
+          <div className="flex items-center gap-2 truncate">
+            <span className="text-moss font-semibold">Active Scope Level:</span>
+            <span className="bg-moss/10 text-moss px-2.5 py-0.5 rounded font-bold">
+              {selectedSubjectObj ? selectedSubjectObj.code : 'All Subjects'}
             </span>
-            {selectedUnit !== 'ALL' && (
-              <span className="bg-clay/10 text-clay px-2 py-0.5 rounded">Unit {selectedUnit}</span>
+            {selectedUnitObj && (
+              <span className="bg-clay/10 text-clay px-2.5 py-0.5 rounded truncate max-w-xs">
+                {selectedUnitObj.title}
+              </span>
             )}
-            {selectedTopic !== 'ALL' && (
-              <span className="text-ink truncate max-w-xs">Topic: {selectedTopic}</span>
+            {selectedTopicObj && (
+              <span className="text-ink font-bold truncate max-w-xs">
+                › {selectedTopicObj.title}
+              </span>
             )}
           </div>
-          <span className="text-slate text-[11px]">Strict Filtering Active</span>
+          <span className="text-slate text-[11px] shrink-0">
+            Level {selectedTopicObj ? '3 (Topic)' : selectedUnitObj ? '2 (Unit)' : selectedSubjectObj ? '1 (Subject)' : '0 (General)'}
+          </span>
         </div>
       </div>
 
       {/* Activity Mode Selector Tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <button
-          onClick={() => setActivityMode('QUIZ')}
-          className={`p-4 rounded-xl border text-left transition-all ${
-            activityMode === 'QUIZ'
-              ? 'border-moss bg-moss text-paper shadow-sm font-semibold'
-              : 'border-ink/15 bg-white text-ink hover:border-moss'
-          }`}
-        >
-          <div className="text-lg mb-1">🎯 MCQ Quiz</div>
-          <div className="text-xs opacity-90">Test knowledge with instant feedback & scoring</div>
-        </button>
-
-        <button
-          onClick={() => setActivityMode('FLASHCARDS')}
-          className={`p-4 rounded-xl border text-left transition-all ${
-            activityMode === 'FLASHCARDS'
-              ? 'border-moss bg-moss text-paper shadow-sm font-semibold'
-              : 'border-ink/15 bg-white text-ink hover:border-moss'
-          }`}
-        >
-          <div className="text-lg mb-1">🎴 Flashcards</div>
-          <div className="text-xs opacity-90">Active recall drills & 3D flip card review</div>
-        </button>
-
-        <button
-          onClick={() => setActivityMode('REVISION')}
-          className={`p-4 rounded-xl border text-left transition-all ${
-            activityMode === 'REVISION'
-              ? 'border-moss bg-moss text-paper shadow-sm font-semibold'
-              : 'border-ink/15 bg-white text-ink hover:border-moss'
-          }`}
-        >
-          <div className="text-lg mb-1">⚡ Quick Revision</div>
-          <div className="text-xs opacity-90">Key concepts, definitions & visual summaries</div>
-        </button>
-
-        <button
-          onClick={() => setActivityMode('PRACTICE_QUESTIONS')}
-          className={`p-4 rounded-xl border text-left transition-all ${
-            activityMode === 'PRACTICE_QUESTIONS'
-              ? 'border-moss bg-moss text-paper shadow-sm font-semibold'
-              : 'border-ink/15 bg-white text-ink hover:border-moss'
-          }`}
-        >
-          <div className="text-lg mb-1">📝 Practice Exam Prep</div>
-          <div className="text-xs opacity-90">Viva questions, paper setter layouts & procedures</div>
-        </button>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+        {[
+          { mode: 'QUIZ', label: '🎯 MCQ Quiz', desc: 'Instant feedback' },
+          { mode: 'FLASHCARDS', label: '🎴 Flashcards', desc: '3D active recall' },
+          { mode: 'REVISION', label: '⚡ Quick Revision', desc: 'High-yield notes' },
+          { mode: 'PRACTICE_QUESTIONS', label: '📝 Practice Exam', desc: 'Model Q&A' },
+          { mode: 'EXAM_PREP', label: '🎓 Exam Prep', desc: 'Paper setter rules' }
+        ].map((item) => (
+          <button
+            key={item.mode}
+            onClick={() => setActivityMode(item.mode)}
+            className={`p-3 rounded-xl border text-left transition-all ${
+              activityMode === item.mode
+                ? 'border-moss bg-moss text-paper shadow-sm font-semibold'
+                : 'border-ink/15 bg-white text-ink hover:border-moss'
+            }`}
+          >
+            <div className="text-xs font-bold font-mono">{item.label}</div>
+            <div className="text-[10px] opacity-80 mt-0.5">{item.desc}</div>
+          </button>
+        ))}
       </div>
 
-      {loading && <Loading />}
-      {error && <ErrorBlock message={error} />}
+      {loadingActivity && <Loading />}
+      {activityError && <ErrorBlock message={activityError} />}
 
-      {/* ACTIVITY 1: QUIZ MODE */}
-      {!loading && !error && activityMode === 'QUIZ' && (
+      {/* ACTIVITY MODE 1: MCQ QUIZ */}
+      {!loadingActivity && !activityError && activityMode === 'QUIZ' && (
         <div>
-          {quizzes.length === 0 ? (
+          {activeQuizQuestions.length === 0 ? (
             <Empty
-              title="No Quizzes Available in Selected Scope"
-              hint={`No quiz questions found for ${selectedSubject !== 'ALL' ? selectedSubject : 'current selection'}. Try selecting 'All Units' or another subject.`}
+              title="No Quiz Content Available for This Selection"
+              hint={
+                selectedSubject === 'ALL'
+                  ? 'Please select a subject to start a targeted quiz.'
+                  : `No quiz questions found for ${selectedSubject}${selectedUnit !== 'ALL' ? ` • Unit ${selectedUnit}` : ''}. Try selecting another unit or subject.`
+              }
             />
           ) : (
             <div className="border border-ink/15 rounded-2xl bg-white p-6 space-y-6 shadow-sm">
-              <div className="flex items-center justify-between border-b border-ink/10 pb-3">
-                <span className="font-mono text-xs text-moss font-semibold">
-                  Targeted MCQ Quiz ({quizzes.length} Questions)
+              <div className="flex items-center justify-between border-b border-ink/10 pb-3 font-mono text-xs">
+                <span className="text-moss font-semibold">
+                  Targeted MCQ Quiz ({activeQuizQuestions.length} Questions)
                 </span>
-                <span className="font-mono text-xs text-slate">
-                  {selectedSubject !== 'ALL' ? selectedSubject : 'Syllabus Quiz'}
+                <span className="text-slate">
+                  {selectedSubjectObj ? `${selectedSubjectObj.code} ${selectedUnitObj ? `(${selectedUnitObj.title})` : ''}` : 'Syllabus Quiz'}
                 </span>
               </div>
 
               <div className="space-y-6">
-                {quizzes.map((q, idx) => (
+                {activeQuizQuestions.map((q, idx) => (
                   <div key={q.questionId || idx} className="border border-ink/10 rounded-xl p-4 bg-paper/30 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-medium text-sm text-ink">
@@ -377,7 +546,7 @@ export default function PracticeStudio() {
                     <div className="space-y-2">
                       {(q.options || []).map((opt, optIdx) => {
                         const isSelected = userAnswers[idx] === optIdx;
-                        const isCorrectOpt = quizSubmitted && (optIdx === q.correctIndex || opt === q.correctAnswer);
+                        const isCorrectOpt = quizSubmitted && (opt === q.correctAnswer || optIdx === q.correctIndex);
                         const isWrongPick = quizSubmitted && isSelected && !isCorrectOpt;
 
                         return (
@@ -422,10 +591,10 @@ export default function PracticeStudio() {
                 <div className="border border-moss/30 rounded-xl p-5 bg-moss/5 flex items-center justify-between">
                   <div>
                     <h3 className="font-display text-xl font-bold text-moss">
-                      Score: {quizScore} / {quizzes.length} Correct
+                      Score: {quizScore} / {activeQuizQuestions.length} Correct
                     </h3>
                     <p className="text-xs text-slate mt-0.5">
-                      {quizScore === quizzes.length ? 'Perfect score! You mastered this scope.' : 'Great effort! Review the explanations above.'}
+                      {quizScore === activeQuizQuestions.length ? 'Perfect score! You mastered this scope.' : 'Great effort! Review explanations above.'}
                     </p>
                   </div>
                   <button
@@ -444,19 +613,23 @@ export default function PracticeStudio() {
         </div>
       )}
 
-      {/* ACTIVITY 2: FLASHCARDS MODE */}
-      {!loading && !error && activityMode === 'FLASHCARDS' && (
+      {/* ACTIVITY MODE 2: FLASHCARDS */}
+      {!loadingActivity && !activityError && activityMode === 'FLASHCARDS' && (
         <div>
-          {flashcards.length === 0 ? (
+          {activeFlashcards.length === 0 ? (
             <Empty
-              title="No Flashcards Available in Selected Scope"
-              hint={`No flashcards found for ${selectedSubject !== 'ALL' ? selectedSubject : 'current selection'}. Try selecting another unit or subject.`}
+              title="No Flashcards Available for This Selection"
+              hint={
+                selectedSubject === 'ALL'
+                  ? 'Please select a subject to start active recall flashcard drills.'
+                  : `No flashcards found for ${selectedSubject}. Try selecting another unit or topic.`
+              }
             />
           ) : (
             <div className="max-w-xl mx-auto space-y-4">
               <div className="flex items-center justify-between text-xs font-mono text-slate">
-                <span>Card {cardIndex + 1} of {flashcards.length}</span>
-                <span>{flashcards[cardIndex]?.categoryHint || 'Active Recall'}</span>
+                <span>Card {cardIndex + 1} of {activeFlashcards.length}</span>
+                <span>{activeFlashcards[cardIndex]?.categoryHint || 'Active Recall'}</span>
               </div>
 
               {/* 3D Flip Card */}
@@ -473,17 +646,49 @@ export default function PracticeStudio() {
                   </div>
 
                   <h3 className="font-display text-lg text-ink font-medium leading-relaxed">
-                    {cardFlipped ? flashcards[cardIndex]?.back : flashcards[cardIndex]?.front}
+                    {cardFlipped ? activeFlashcards[cardIndex]?.back : activeFlashcards[cardIndex]?.front}
                   </h3>
                 </div>
 
                 <div className="pt-4 border-t border-ink/5 text-xs font-mono text-slate flex justify-between">
-                  <span>Subject: {flashcards[cardIndex]?.subjectCode || selectedSubject}</span>
+                  <span>{activeFlashcards[cardIndex]?.subjectCode || selectedSubject}</span>
                   <span className="text-moss font-semibold">{cardFlipped ? 'Tap to view question' : 'Tap to reveal answer'}</span>
                 </div>
               </div>
 
-              {/* Self-Evaluation Buttons */}
+              {/* Card Navigation Controls */}
+              <div className="flex items-center justify-between text-xs font-mono pt-1">
+                <button
+                  disabled={cardIndex === 0}
+                  onClick={() => {
+                    setCardFlipped(false);
+                    setCardIndex((i) => Math.max(0, i - 1));
+                  }}
+                  className="border border-ink/15 rounded-full px-4 py-2 bg-white hover:bg-paper disabled:opacity-40"
+                >
+                  ← Previous
+                </button>
+
+                <button
+                  onClick={shuffleCards}
+                  className="border border-ink/15 rounded-full px-3 py-2 bg-white text-slate hover:text-ink"
+                >
+                  Shuffle 🔀
+                </button>
+
+                <button
+                  disabled={cardIndex === activeFlashcards.length - 1}
+                  onClick={() => {
+                    setCardFlipped(false);
+                    setCardIndex((i) => Math.min(activeFlashcards.length - 1, i + 1));
+                  }}
+                  className="border border-ink/15 rounded-full px-4 py-2 bg-white hover:bg-paper disabled:opacity-40"
+                >
+                  Next →
+                </button>
+              </div>
+
+              {/* Self-Evaluation Mastery Buttons */}
               {cardFlipped && (
                 <div className="grid grid-cols-3 gap-2 pt-2">
                   <button
@@ -511,24 +716,35 @@ export default function PracticeStudio() {
         </div>
       )}
 
-      {/* ACTIVITY 3: QUICK REVISION MODE */}
-      {!loading && !error && activityMode === 'REVISION' && (
+      {/* ACTIVITY MODE 3: QUICK REVISION */}
+      {!loadingActivity && !activityError && activityMode === 'REVISION' && (
         <div className="space-y-4">
           <div className="border border-ink/15 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-xl text-ink">Quick Revision Summary ({selectedSubject !== 'ALL' ? selectedSubject : 'All Subjects'})</h3>
-            <p className="text-xs text-slate">
-              Essential bullet points, key terms, and visual explanations strictly for your selected scope.
-            </p>
+            <div className="flex items-center justify-between border-b border-ink/10 pb-3 font-mono text-xs">
+              <h3 className="font-display text-xl text-ink font-semibold">
+                Quick Revision Summary
+              </h3>
+              <span className="text-moss font-bold">
+                {selectedSubjectObj ? selectedSubjectObj.code : 'All Subjects'}
+              </span>
+            </div>
 
-            <div className="space-y-4">
-              {filteredTopics.length === 0 ? (
-                <Empty title="No revision notes found" hint="Select another subject or unit to view quick revision notes." />
-              ) : (
-                filteredTopics.map((t, idx) => (
+            {scopedTopics.length === 0 ? (
+              <Empty
+                title="No Quick Revision Content Available"
+                hint={
+                  selectedSubject === 'ALL'
+                    ? 'Select a subject to load revision summaries.'
+                    : 'No topics found for this selection.'
+                }
+              />
+            ) : (
+              <div className="space-y-4">
+                {scopedTopics.map((t, idx) => (
                   <div key={t.topicId || idx} className="border border-ink/10 rounded-xl p-4 bg-paper/30 space-y-3">
                     <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                      <h4 className="font-display text-base text-ink">{t.title || t.name}</h4>
-                      <span className="text-[10px] font-mono text-clay">{t.subjectCode}</span>
+                      <h4 className="font-display text-base text-ink font-semibold">{t.title || t.name}</h4>
+                      <span className="text-[10px] font-mono text-clay">{t.subjectCode} • Unit {t.unitNumber || 1}</span>
                     </div>
 
                     {t.overview && <p className="text-xs text-slate">{t.overview}</p>}
@@ -546,7 +762,7 @@ export default function PracticeStudio() {
 
                     {t.importantTerms && Object.keys(t.importantTerms).length > 0 && (
                       <div className="pt-2">
-                        <strong className="text-xs font-mono text-clay uppercase block mb-1">Important Terminology:</strong>
+                        <strong className="text-xs font-mono text-clay uppercase block mb-1">Academic Terminology:</strong>
                         <div className="grid sm:grid-cols-2 gap-2 text-xs">
                           {Object.entries(t.importantTerms).map(([term, def], i) => (
                             <div key={i} className="p-2 rounded bg-white border border-ink/5">
@@ -557,41 +773,106 @@ export default function PracticeStudio() {
                       </div>
                     )}
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ACTIVITY 4: PRACTICE QUESTIONS (EXAM & VIVA) */}
-      {!loading && !error && activityMode === 'PRACTICE_QUESTIONS' && (
+      {/* ACTIVITY MODE 4: PRACTICE EXAM QUESTIONS */}
+      {!loadingActivity && !activityError && activityMode === 'PRACTICE_QUESTIONS' && (
         <div className="space-y-4">
           <div className="border border-ink/15 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-xl text-ink">University Exam & Viva Practice Questions</h3>
-            <p className="text-xs text-slate">
-              Sectional exam practice questions, viva defense outlines, and paper setter instructions.
-            </p>
-
-            <div className="space-y-4">
-              <div className="border border-ink/10 rounded-xl p-4 bg-paper/50 space-y-2 text-xs font-mono">
-                <h4 className="text-clay font-bold uppercase">Exam Paper Setter Guidelines:</h4>
-                <p className="text-slate">
-                  Section A: Compulsory short-answer questions (1.5 - 2 marks each). Sections B-E: Unit-wise analytical questions (7 - 12 marks each).
-                </p>
-              </div>
-
-              {filteredTopics.map((t, idx) => (
-                <div key={t.topicId || idx} className="border border-ink/10 rounded-xl p-4 bg-white space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <strong className="font-display text-sm text-ink">{t.title}</strong>
-                    <span className="font-mono text-[10px] text-moss">Practicals & Theory</span>
-                  </div>
-                  <p className="text-slate">1. Explain in detail the construction, procedure, and industrial application of {t.title}. (7 Marks)</p>
-                  <p className="text-slate">2. List key safety precautions and troubleshooting steps for {t.title}. (3 Marks)</p>
-                </div>
-              ))}
+            <div className="flex items-center justify-between border-b border-ink/10 pb-3 font-mono text-xs">
+              <h3 className="font-display text-xl text-ink font-semibold">University Exam & Viva Practice Questions</h3>
+              <span className="text-clay font-bold">{selectedSubjectObj ? selectedSubjectObj.code : 'Syllabus Scoped'}</span>
             </div>
+
+            {scopedTopics.length === 0 ? (
+              <Empty
+                title="No Practice Questions Available"
+                hint={
+                  selectedSubject === 'ALL'
+                    ? 'Select a subject to view exam practice questions.'
+                    : 'No topics found for this selection.'
+                }
+              />
+            ) : (
+              <div className="space-y-4">
+                {scopedTopics.map((t, idx) => (
+                  <div key={t.topicId || idx} className="border border-ink/10 rounded-xl p-4 bg-white space-y-3 text-xs">
+                    <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                      <strong className="font-display text-sm text-ink">{t.title}</strong>
+                      <span className="font-mono text-[10px] text-moss">{t.subjectCode} • Unit {t.unitNumber || 1}</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-lg bg-paper/50 border border-ink/5">
+                        <p className="font-semibold text-ink">Q1 (Short Answer — 2 Marks):</p>
+                        <p className="text-slate mt-0.5">Define the key principles of {t.title} and state its application in apparel manufacturing.</p>
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-paper/50 border border-ink/5">
+                        <p className="font-semibold text-ink">Q2 (Analytical — 7 Marks):</p>
+                        <p className="text-slate mt-0.5">Explain in detail the step-by-step procedure, equipment requirements, and industrial relevance of {t.title}.</p>
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-paper/50 border border-ink/5">
+                        <p className="font-semibold text-ink">Q3 (Viva Voce Defense):</p>
+                        <p className="text-slate mt-0.5">What precautions and troubleshooting steps must be observed during {t.title}?</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ACTIVITY MODE 5: EXAM PREPARATION */}
+      {!loadingActivity && !activityError && activityMode === 'EXAM_PREP' && (
+        <div className="space-y-4">
+          <div className="border border-ink/15 rounded-2xl bg-white p-6 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-3 font-mono text-xs">
+              <h3 className="font-display text-xl text-ink font-semibold">Scope-Specific Exam Preparation</h3>
+              <span className="text-moss font-bold">{selectedSubjectObj ? selectedSubjectObj.code : 'Syllabus Prep'}</span>
+            </div>
+
+            {selectedSubjectObj ? (
+              <div className="space-y-4 text-xs font-mono">
+                {/* 1. Syllabus Focus */}
+                <div className="p-4 rounded-xl bg-paper/60 border border-ink/10 space-y-2">
+                  <h4 className="text-moss font-bold uppercase">1. SYLLABUS FOCUS (Official Paper Setter Rules):</h4>
+                  <p className="text-ink leading-relaxed">
+                    {selectedSubjectObj.instructionsForPaperSetters ||
+                      'The question paper consists of five sections: Section A (compulsory short questions) and Sections B, C, D, E corresponding to Units I to IV.'}
+                  </p>
+                </div>
+
+                {/* 2. AI Study Recommendation */}
+                <div className="p-4 rounded-xl bg-moss/5 border border-moss/20 space-y-2">
+                  <h4 className="text-moss font-bold uppercase">2. AI Study Recommendation — Based on Syllabus:</h4>
+                  <ul className="list-disc list-inside text-slate space-y-1">
+                    {scopedTopics.map((t, idx) => (
+                      <li key={idx}>Prioritize high-yield notes for <strong>{t.title}</strong> (Unit {t.unitNumber || 1}).</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* 3. Past Paper Trend Disclaimer */}
+                <div className="p-4 rounded-xl bg-paper/40 border border-ink/10 space-y-1 text-slate">
+                  <h4 className="text-clay font-bold uppercase">3. PAST PAPER TREND:</h4>
+                  <p>Past-paper analysis will be available when verified question papers are added.</p>
+                </div>
+              </div>
+            ) : (
+              <Empty
+                title="Select a Subject for Exam Preparation"
+                hint="Please select a specific subject from the controls above to view paper setter rules and exam preparation checklists."
+              />
+            )}
           </div>
         </div>
       )}
