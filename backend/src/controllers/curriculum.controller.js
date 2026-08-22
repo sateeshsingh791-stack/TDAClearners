@@ -97,15 +97,31 @@ export const getSubjectByCode = async (req, res, next) => {
     }
 
     if (!subject) {
-      subject = INITIAL_SUBJECTS.find((s) => s.code.toUpperCase() === code);
+      const cleanCode = code.replace(/\s+/g, '').toUpperCase();
+      subject = INITIAL_SUBJECTS.find((s) => {
+        if (s.code.replace(/\s+/g, '').toUpperCase() === cleanCode) return true;
+        if (s.aliases && s.aliases.some((alias) => alias.replace(/\s+/g, '').toUpperCase() === cleanCode)) return true;
+        return false;
+      });
+
       if (!subject) {
         return res.status(404).json({
           success: false,
           error: { message: `Subject ${code} not found.` }
         });
       }
-      topics = INITIAL_TOPICS.filter((t) => t.subjectCode.toUpperCase() === code);
-      practicals = INITIAL_PRACTICALS.filter((p) => p.subjectCode.toUpperCase() === code);
+
+      const matchingCodes = [
+        subject.code.toUpperCase(),
+        ...(subject.aliases || []).map((a) => a.replace(/\s+/g, '').toUpperCase())
+      ];
+
+      topics = INITIAL_TOPICS.filter((t) =>
+        matchingCodes.includes(t.subjectCode.replace(/\s+/g, '').toUpperCase())
+      );
+      practicals = INITIAL_PRACTICALS.filter((p) =>
+        matchingCodes.includes(p.subjectCode.replace(/\s+/g, '').toUpperCase())
+      );
     }
 
     const unitMap = new Map();

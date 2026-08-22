@@ -84,6 +84,9 @@ export default function SubjectDetail() {
               <span className="text-xs font-mono text-slate uppercase">
                 {subject.category} • {subject.type} • Semester {subject.semesterNumber}
               </span>
+              <span className="text-[11px] font-mono text-moss bg-moss/10 border border-moss/20 px-2.5 py-0.5 rounded font-bold">
+                📌 {subject.syllabusSource || 'Official Khalsa College Syllabus'} ({subject.syllabusPageRef || 'Syllabus Scheme'})
+              </span>
             </div>
             <h1 className="font-display text-3xl text-ink">{subject.name}</h1>
           </div>
