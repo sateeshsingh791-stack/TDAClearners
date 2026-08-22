@@ -37,7 +37,7 @@ export const getSemesters = async (req, res, next) => {
     const semesters = semesterNumbers.map((num) => {
       const semSubjects = subjects.filter((s) => s.semesterNumber === num);
       const yearNum = Math.ceil(num / 2);
-      const isAvailable = num === 1 || num === 2;
+      const isAvailable = num >= 1 && num <= 4;
       
       const totalCredits = isAvailable 
         ? semSubjects.reduce((acc, s) => acc + (s.totalCredits || 0), 0)
